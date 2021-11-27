@@ -36,8 +36,12 @@ CHART_IMG_API_KEY=<your_chart_img_api_key>
 ### NPM
 
 ```
-npm install @opnbot/crypto
-npm start
+git clone https://github.com/hawooni/crypto-opnbot
+
+cd crypto-opnbot
+
+npm i
+npm start -- --telegramToken=<your_telegram_token>
 ```
 
 ### Docker
