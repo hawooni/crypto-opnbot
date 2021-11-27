@@ -1,0 +1,15 @@
+CHANGELOG.md
+LICENSE
+README.md
+node_modules
+package-lock.json
+doc
+pm2.json
+.development
+.env
+.env.dev
+.env.prod
+.gitignore
+.prettierignore
+.prettierrc
+*.zip
