@@ -18,7 +18,7 @@ Customize preset settings by modifying `config/setting.js`. Refer to CHART-IMG [
 
 ### .env file
 
-You need to create .env file with the following variable(s):
+You should create .env file with the following variable(s):
 
 ```
 TELEGRAM_TOKEN=<your_telegram_token>
