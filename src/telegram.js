@@ -23,6 +23,7 @@ const {
   DEFAULT_TIMEZONE,
   INPUT_SYMBOLS,
   INPUT_SYMBOLS_COLUMN,
+  INPUT_CHECK_CHAR,
   PRICE_IMG_WIDTH,
   PRICE_IMG_HEIGHT,
   CHART_IMG_WIDTH,
@@ -30,6 +31,7 @@ const {
   CHART_INPUT_INTERVALS,
   CHART_INPUT_STUDIES,
   CHART_INPUT_STUDIES_COLUMN,
+  CHART_INPUT_STUDIES_SPLIT,
   API_CHART_IMG_BASE_URL,
 } = SETTING
 
@@ -58,7 +60,7 @@ module.exports = (log, argv, version) => {
     },
     {
       command: '/chart',
-      description: 'Show TradingView Advanced Chart',
+      description: 'Show TradingView Advanced Chart.',
     },
     {
       command: '/example',
@@ -97,8 +99,8 @@ module.exports = (log, argv, version) => {
                     caption: getPriceCaption(eSymbol),
                     parse_mode: 'HTML',
                     reply_markup: {
-                      inline_keyboard: getChunkInputKeys(
-                        `${CB_ACTION_PRICE_SYMBOL}|`,
+                      inline_keyboard: getChunkInputObjs(
+                        CB_ACTION_PRICE_SYMBOL,
                         INPUT_SYMBOLS,
                         INPUT_SYMBOLS_COLUMN,
                         eSymbol
@@ -116,8 +118,8 @@ module.exports = (log, argv, version) => {
                     caption: getChartCaption(eSymbol),
                     parse_mode: 'HTML',
                     reply_markup: {
-                      inline_keyboard: getChunkInputKeys(
-                        `${CB_ACTION_CHART_SYMBOL}|`,
+                      inline_keyboard: getChunkInputObjs(
+                        CB_ACTION_CHART_SYMBOL,
                         INPUT_SYMBOLS,
                         INPUT_SYMBOLS_COLUMN,
                         eSymbol
@@ -140,7 +142,7 @@ module.exports = (log, argv, version) => {
                 )
             } else if (text.startsWith('/chart')) {
               const [eSymbol, interval, studies] = text.split(' ').slice(1)
-              const splitStudies = studies?.split(',')
+              const splitStudies = studies?.split(CHART_INPUT_STUDIES_SPLIT)
 
               return axios
                 .get(getChartImgApiUrl(eSymbol, interval, splitStudies), {
@@ -179,8 +181,7 @@ module.exports = (log, argv, version) => {
   teleBot.on('callback_query', (cbQuery) => {
     const { from, message, data } = cbQuery
     const { chat, message_id } = message
-    const inputArray = data.split('|')
-    const [inputAction, inputExchangeSymbol] = inputArray
+    const [cbKey, symbol, interval, studies] = data.split('|')
 
     incrementChatCountLimit(from)
 
@@ -192,69 +193,65 @@ module.exports = (log, argv, version) => {
             show_alert: true,
           })
         } else if (isOkayToChat(from)) {
-          if (inputAction.startsWith('chart')) {
-            const [inputInterval, inputStudies] = inputArray.slice(2)
-
-            if (inputAction === CB_ACTION_CHART_SYMBOL) {
-              return reqChartEditMsgPhoto(
-                chat.id,
-                message_id,
-                [inputExchangeSymbol],
-                getChunkInputKeys(
-                  `${CB_ACTION_CHART_INTERVAL}|${inputExchangeSymbol}|`,
-                  CHART_INPUT_INTERVALS,
-                  undefined,
-                  DEFAULT_CHART_INTERVAL
-                )
-              )
-            } else if (inputAction === CB_ACTION_CHART_INTERVAL) {
-              return reqChartEditMsgPhoto(
-                chat.id,
-                message_id,
-                [inputExchangeSymbol, inputInterval],
-                getChunkInputKeys(
-                  `${CB_ACTION_CHART_STUDIES}|${inputExchangeSymbol}|${inputInterval}|`,
-                  CHART_INPUT_STUDIES,
-                  CHART_INPUT_STUDIES_COLUMN,
-                  DEFAULT_CHART_STUDIES.toString()
-                )
-              )
-            } else if (inputAction === CB_ACTION_CHART_STUDIES) {
-              return reqChartEditMsgPhoto(
-                chat.id,
-                message_id,
-                [inputExchangeSymbol, inputInterval, inputStudies.split(',')],
-                getChunkInputKeys(
-                  `${CB_ACTION_CHART_STUDIES}|${inputExchangeSymbol}|${inputInterval}|`,
-                  CHART_INPUT_STUDIES,
-                  CHART_INPUT_STUDIES_COLUMN,
-                  inputStudies
-                )
-              )
-            }
-          } else if (inputAction.startsWith('price')) {
+          if (cbKey === CB_ACTION_CHART_SYMBOL) {
+            const inputs = getChunkInputValues(
+              `${CB_ACTION_CHART_INTERVAL}|${symbol}`,
+              CHART_INPUT_INTERVALS,
+              undefined,
+              interval || DEFAULT_CHART_INTERVAL
+            )
+            return reqChartEditMsgPhoto(chat.id, message_id, [symbol, interval], inputs)
+          } else if (cbKey === CB_ACTION_CHART_INTERVAL) {
+            const inputs = getChunkInputObjs(
+              `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
+              CHART_INPUT_STUDIES,
+              CHART_INPUT_STUDIES_COLUMN,
+              DEFAULT_CHART_STUDIES
+            )
+            return reqChartEditMsgPhoto(
+              chat.id,
+              message_id,
+              [symbol, interval],
+              getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
+            )
+          } else if (cbKey === CB_ACTION_CHART_STUDIES) {
+            const arrStudies = studies.split(CHART_INPUT_STUDIES_SPLIT)
+            const inputs = getChunkInputObjs(
+              `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
+              CHART_INPUT_STUDIES,
+              CHART_INPUT_STUDIES_COLUMN,
+              arrStudies
+            )
+            return reqChartEditMsgPhoto(
+              chat.id,
+              message_id,
+              [symbol, interval, arrStudies],
+              getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
+            )
+          } else if (cbKey === CB_ACTION_PRICE_SYMBOL) {
             return reqPriceEditMsgPhoto(
               chat.id,
               message_id,
-              [inputExchangeSymbol],
-              getChunkInputKeys(
-                `${CB_ACTION_PRICE_SYMBOL}|`,
-                INPUT_SYMBOLS,
-                INPUT_SYMBOLS_COLUMN,
-                inputExchangeSymbol
-              )
+              [symbol],
+              getChunkInputObjs(CB_ACTION_PRICE_SYMBOL, INPUT_SYMBOLS, INPUT_SYMBOLS_COLUMN, symbol)
             )
           }
         }
       })
       .catch((error) => {
-        log.error(error.message)
-        if (error.response?.status === 422) {
+        if (error.response?.statusCode === 403) {
+          log.error(error.message)
+          teleBot.sendMessage(from.id, 'Please /start to re-initiate a conversation.')
+          // when a conversation expires, the only way to re-init the cb query is for a user to /start
+        } else if (error.response?.statusCode === 400) {
+          log.debug(`:: debug :: ${error.message}`) // bad request by the user
+        } else if (error.response?.status === 422) {
           teleBot.answerCallbackQuery(cbQuery.id, {
             text: MESSAGE.INVALID_REQUEST,
             show_alert: true,
           })
         } else {
+          log.error(error.message)
           teleBot.answerCallbackQuery(cbQuery.id, { text: error.message, show_alert: true })
         }
       })
@@ -354,7 +351,7 @@ module.exports = (log, argv, version) => {
   function getChartCaption(eSymbol, interval = null, studies = null) {
     const dInterval = interval || DEFAULT_CHART_INTERVAL
     const dStudies = studies || DEFAULT_CHART_STUDIES
-    return `${eSymbol.toUpperCase()} ${dInterval} ${dStudies.toString()}`
+    return `${eSymbol.toUpperCase()} ${dInterval} ${dStudies.join(CHART_INPUT_STUDIES_SPLIT)}`
   }
 
   /**
@@ -392,10 +389,10 @@ module.exports = (log, argv, version) => {
    * @param {Integer} chatId
    * @param {Integer} msgId
    * @param {Array} inputs
-   * @param {Object[]} inputKeys
+   * @param {Object[]|null} inputKeys
    * @returns {Promise}
    */
-  function reqChartEditMsgPhoto(chatId, msgId, inputs, inputKeys) {
+  function reqChartEditMsgPhoto(chatId, msgId, inputs, inputKeys = null) {
     const chartImgApiUrl = getChartImgApiUrl(...inputs)
 
     return axios
@@ -450,26 +447,61 @@ module.exports = (log, argv, version) => {
   }
 
   /**
+   * @param {Object[]} inputs
+   * @param {String} cbKey
+   * @returns {Array}
+   */
+  function getInputsInludeBack(inputs, cbKey) {
+    return [
+      ...inputs,
+      [
+        {
+          text: 'BACK',
+          callback_data: cbKey,
+        },
+      ],
+    ]
+  }
+
+  /**
    * generate inline keyboard inputs
    *
-   * @param {String} cbKey callback query data
-   * @param {String[]|Object[]} values input text values
+   * @param {String} cbKeys callback query keys
+   * @param {String[]} values input texts
    * @param {Integer|null} limit inline keyboard column limit
    * @param {String|null} checkValue insert check char beside text value if match
-   * @param {String} checkChar
-   * @returns {Object[]} eg. [{ text: 'BTCUSDT', callback_data: 'chart-symbol|...|BTCUSDT' }]
+   * @returns {Object[]} eg. [{ text: 'BTCUSDT', callback_data: 'price-symbol|BINANCE:BTCUSDT|...' }, ...]
    */
-  function getChunkInputKeys(cbKey, values, limit = null, checkValue = null, checkChar = '✓') {
+  function getChunkInputValues(cbKeys, values, limit = null, checkValue = null) {
     const inputs = values.map((value) => {
-      if (typeof value === 'object') {
+      return {
+        text: checkValue === value ? `${value} ${INPUT_CHECK_CHAR}` : value,
+        callback_data: `${cbKeys}|${value}`,
+      }
+    })
+    return limit > 0 ? lodash.chunk(inputs, limit) : [inputs]
+  }
+
+  /**
+   * generate inline keyboard input objects
+   *
+   * @param {String} cbKey
+   * @param {Object[]} objs
+   * @param {Integer|null} limit
+   * @param {String|null} checkValue
+   * @returns {Object[]}
+   */
+  function getChunkInputObjs(cbKey, objs, limit = null, checkValue = null) {
+    const inputs = objs.map((obj) => {
+      if (Array.isArray(obj.value)) {
         return {
-          text: checkValue === value.value ? `${value.text} ${checkChar}` : value.text,
-          callback_data: `${cbKey}${value.value}`,
+          text: checkValue.toString() === obj.value.toString() ? `${obj.text} ${INPUT_CHECK_CHAR}` : obj.text, // prettier-ignore
+          callback_data: `${cbKey}|${obj.value.join(CHART_INPUT_STUDIES_SPLIT)}`,
         }
       } else {
         return {
-          text: checkValue === value ? `${value} ${checkChar}` : value,
-          callback_data: `${cbKey}${value}`,
+          text: checkValue === obj.value ? `${obj.text} ${INPUT_CHECK_CHAR}` : obj.text,
+          callback_data: `${cbKey}|${obj.value}`,
         }
       }
     })

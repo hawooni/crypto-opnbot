@@ -30,7 +30,7 @@ const argv = yargs
   .option('rateLimit', {
     describe: 'Set request rate limit',
     type: 'number',
-    default: config.TELEGRAM_RATE_LIMIT_USER || 0,
+    default: config.TELEGRAM_RATE_LIMIT_USER,
   }).argv
 
 log.info(`CryptOpnBot version ${version} (https://crypto.opnbot.com)`)
@@ -38,5 +38,9 @@ log.info(`CryptOpnBot version ${version} (https://crypto.opnbot.com)`)
 // node-telegram-bot-api suppress warnings
 process.env.NTBA_FIX_319 = 1
 process.env.NTBA_FIX_350 = 1
+
+if (!Array.isArray(config.CHART_INPUT_STUDIES?.[0]?.value)) {
+  log.warn('\nWarning: config setting CHART_INPUT_STUDIES String value is deprecated in v0.2.0+')
+}
 
 srvTelegram(log, argv, version)

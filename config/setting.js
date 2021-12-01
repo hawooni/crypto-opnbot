@@ -5,7 +5,7 @@ module.exports = {
   DEFAULT_EXCHANGE: 'BINANCE',
   DEFAULT_PRICE_INTERVAL: '3M', // 1d,1M,3M,1Y,5Y,all
   DEFAULT_CHART_INTERVAL: '1d', // 1m,3m,5m,15m,30m,45m,1h,2h,3h,4h,1d,1w
-  DEFAULT_CHART_STUDIES: ['MA:50', 'MA:200', 'RSI'],
+  DEFAULT_CHART_STUDIES: ['EMA:50', 'EMA:200', 'RSI'],
   DEFAULT_TIMEZONE: 'Etc/UTC',
 
   BOT_NAME: '@CryptoOpnBot',
@@ -18,8 +18,10 @@ module.exports = {
   CHART_IMG_WIDTH: 800,
   CHART_IMG_HEIGHT: 600,
 
+  INPUT_CHECK_CHAR: '✓',
   INPUT_SYMBOLS_COLUMN: 4,
   CHART_INPUT_STUDIES_COLUMN: 3,
+  CHART_INPUT_STUDIES_SPLIT: ';',
 
   INPUT_SYMBOLS: [
     {
@@ -88,57 +90,55 @@ module.exports = {
     },
   ],
 
-  CHART_INPUT_INTERVALS: [
-    '1m', '5m', '15m', '30m', '1h', '4h', '1d'
-  ],
+  CHART_INPUT_INTERVALS: ['1m', '5m', '15m', '1h', '4h', '1d'],
   CHART_INPUT_STUDIES: [
     {
       text: 'EMA,RSI',
-      value: 'EMA:50,EMA:200,RSI',
+      value: ['EMA:50', 'EMA:200', 'RSI'],
     },
     {
       text: 'EMA,MACD',
-      value: 'EMA:50,EMA:200,MACD',
+      value: ['EMA:50', 'EMA:200', 'MACD'],
     },
     {
       text: 'EMA,STOCH',
-      value: 'EMA:50,EMA:200,STOCH',
+      value: ['EMA:50', 'EMA:200', 'STOCH'],
     },
     {
       text: 'MA,RSI',
-      value: 'MA:50,MA:200,RSI',
+      value: ['MA:50', 'MA:200', 'RSI'],
     },
     {
       text: 'MA,MACD',
-      value: 'MA:50,MA:200,MACD',
+      value: ['MA:50', 'MA:200', 'MACD'],
     },
     {
       text: 'MA,STOCH',
-      value: 'MA:50,MA:200,STOCH',
+      value: ['MA:50', 'MA:200', 'STOCH'],
     },
     {
       text: 'BB,RSI',
-      value: 'BB,RSI',
+      value: ['BB', 'RSI'],
     },
     {
       text: 'BB,MACD',
-      value: 'BB,MACD',
+      value: ['BB', 'MACD'],
     },
     {
       text: 'BB,STOCH',
-      value: 'BB,STOCH',
+      value: ['BB', 'STOCH'],
     },
     {
       text: 'IC,RSI',
-      value: 'IC,RSI',
+      value: ['IC', 'RSI'],
     },
     {
       text: 'IC,MACD',
-      value: 'IC,MACD',
+      value: ['IC', 'MACD'],
     },
     {
       text: 'IC,STOCH',
-      value: 'IC,STOCH',
+      value: ['IC', 'STOCH'],
     },
   ],
 
