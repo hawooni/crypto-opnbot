@@ -32,6 +32,8 @@ const {
   CHART_INPUT_STUDIES,
   CHART_INPUT_STUDIES_COLUMN,
   CHART_INPUT_STUDIES_SPLIT,
+  TELEGRAM_ALLOW_BOT,
+  TELEGRAM_WHITE_LIST_IDS,
   API_CHART_IMG_BASE_URL,
 } = SETTING
 
@@ -52,19 +54,19 @@ module.exports = (log, argv, version) => {
   teleBot.setMyCommands([
     {
       command: '/start',
-      description: 'The introduction of CryptoOpnBot.',
+      description: 'Show Welcome Message.',
     },
     {
       command: '/price',
-      description: 'Show TradingView Mini Chart.',
+      description: 'Show Mini Price Chart.',
     },
     {
       command: '/chart',
-      description: 'Show TradingView Advanced Chart.',
+      description: 'Show Advanced Chart.',
     },
     {
       command: '/example',
-      description: 'Show examples of how to use each command.',
+      description: 'Show command examples.',
     },
   ])
 
@@ -97,7 +99,6 @@ module.exports = (log, argv, version) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getPriceCaption(eSymbol),
-                    parse_mode: 'HTML',
                     reply_markup: {
                       inline_keyboard: getChunkInputObjs(
                         CB_ACTION_PRICE_SYMBOL,
@@ -116,7 +117,6 @@ module.exports = (log, argv, version) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getChartCaption(eSymbol),
-                    parse_mode: 'HTML',
                     reply_markup: {
                       inline_keyboard: getChunkInputObjs(
                         CB_ACTION_CHART_SYMBOL,
@@ -137,7 +137,6 @@ module.exports = (log, argv, version) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getPriceCaption(eSymbol, interval),
-                    parse_mode: 'HTML',
                   })
                 )
             } else if (text.startsWith('/chart')) {
@@ -151,7 +150,6 @@ module.exports = (log, argv, version) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getChartCaption(eSymbol, interval, splitStudies),
-                    parse_mode: 'HTML',
                   })
                 )
             } else if (text.startsWith('/example')) {
@@ -169,10 +167,13 @@ module.exports = (log, argv, version) => {
         }
       })
       .catch((error) => {
-        log.error(error.message)
+        const logErrMsg = `${from.first_name} :: ${text} :: ${error.message}`
+
         if (error.response?.status === 422) {
-          teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST)
+          log.debug(`:: debug :: ${logErrMsg}`)
+          teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
         } else {
+          log.error(logErrMsg)
           teleBot.sendMessage(from.id, error.message)
         }
       })
@@ -193,66 +194,74 @@ module.exports = (log, argv, version) => {
             show_alert: true,
           })
         } else if (isOkayToChat(from)) {
-          if (cbKey === CB_ACTION_CHART_SYMBOL) {
-            const inputs = getChunkInputValues(
-              `${CB_ACTION_CHART_INTERVAL}|${symbol}`,
-              CHART_INPUT_INTERVALS,
-              undefined,
-              interval || DEFAULT_CHART_INTERVAL
-            )
-            return reqChartEditMsgPhoto(chat.id, message_id, [symbol, interval], inputs)
-          } else if (cbKey === CB_ACTION_CHART_INTERVAL) {
-            const inputs = getChunkInputObjs(
-              `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
-              CHART_INPUT_STUDIES,
-              CHART_INPUT_STUDIES_COLUMN,
-              DEFAULT_CHART_STUDIES
-            )
-            return reqChartEditMsgPhoto(
-              chat.id,
-              message_id,
-              [symbol, interval],
-              getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
-            )
-          } else if (cbKey === CB_ACTION_CHART_STUDIES) {
-            const arrStudies = studies.split(CHART_INPUT_STUDIES_SPLIT)
-            const inputs = getChunkInputObjs(
-              `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
-              CHART_INPUT_STUDIES,
-              CHART_INPUT_STUDIES_COLUMN,
-              arrStudies
-            )
-            return reqChartEditMsgPhoto(
-              chat.id,
-              message_id,
-              [symbol, interval, arrStudies],
-              getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
-            )
-          } else if (cbKey === CB_ACTION_PRICE_SYMBOL) {
-            return reqPriceEditMsgPhoto(
-              chat.id,
-              message_id,
-              [symbol],
-              getChunkInputObjs(CB_ACTION_PRICE_SYMBOL, INPUT_SYMBOLS, INPUT_SYMBOLS_COLUMN, symbol)
-            )
+          if (symbol) {
+            if (cbKey === CB_ACTION_CHART_SYMBOL) {
+              const inputs = getChunkInputValues(
+                `${CB_ACTION_CHART_INTERVAL}|${symbol}`,
+                CHART_INPUT_INTERVALS,
+                undefined,
+                interval || DEFAULT_CHART_INTERVAL
+              )
+              return reqChartEditMsgPhoto(chat.id, message_id, [symbol, interval], inputs)
+            } else if (cbKey === CB_ACTION_CHART_INTERVAL) {
+              const inputs = getChunkInputObjs(
+                `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
+                CHART_INPUT_STUDIES,
+                CHART_INPUT_STUDIES_COLUMN,
+                DEFAULT_CHART_STUDIES
+              )
+              return reqChartEditMsgPhoto(
+                chat.id,
+                message_id,
+                [symbol, interval],
+                getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
+              )
+            } else if (cbKey === CB_ACTION_CHART_STUDIES) {
+              const arrStudies = studies.split(CHART_INPUT_STUDIES_SPLIT)
+              const inputs = getChunkInputObjs(
+                `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
+                CHART_INPUT_STUDIES,
+                CHART_INPUT_STUDIES_COLUMN,
+                arrStudies
+              )
+              return reqChartEditMsgPhoto(
+                chat.id,
+                message_id,
+                [symbol, interval, arrStudies],
+                getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
+              )
+            } else if (cbKey === CB_ACTION_PRICE_SYMBOL) {
+              return reqPriceEditMsgPhoto(
+                chat.id,
+                message_id,
+                [symbol],
+                getChunkInputObjs(
+                  CB_ACTION_PRICE_SYMBOL,
+                  INPUT_SYMBOLS,
+                  INPUT_SYMBOLS_COLUMN,
+                  symbol
+                )
+              )
+            }
+          } else {
+            throw Error('Unable to get symbol from callback query.')
           }
         }
       })
       .catch((error) => {
-        if (error.response?.statusCode === 403) {
-          log.error(error.message)
-          teleBot.sendMessage(from.id, 'Please /start to re-initiate a conversation.')
-          // when a conversation expires, the only way to re-init the cb query is for a user to /start
-        } else if (error.response?.statusCode === 400) {
-          log.debug(`:: debug :: ${error.message}`) // bad request by the user
+        const logErrMsg = `${from.first_name} :: ${data} :: ${error.message}`
+
+        if (error.response?.statusCode === 400) {
+          log.debug(logErrMsg) // telebot.req bad request by the user
+        } else if (error.response?.statusCode === 403) {
+          log.debug(logErrMsg)
+          teleBot.sendMessage(from.id, 'Please /start to re-initiate a conversation.') // telebot.req
         } else if (error.response?.status === 422) {
-          teleBot.answerCallbackQuery(cbQuery.id, {
-            text: MESSAGE.INVALID_REQUEST,
-            show_alert: true,
-          })
+          log.error(logErrMsg)
+          teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
         } else {
-          log.error(error.message)
-          teleBot.answerCallbackQuery(cbQuery.id, { text: error.message, show_alert: true })
+          log.error(logErrMsg)
+          teleBot.sendMessage(from.id, error.message)
         }
       })
       .finally(() => {
@@ -280,8 +289,6 @@ module.exports = (log, argv, version) => {
    * @returns {Boolean}
    */
   function isOkayToChat(from) {
-    const { TELEGRAM_ALLOW_BOT, TELEGRAM_WHITE_LIST_IDS } = SETTING
-
     if (!TELEGRAM_ALLOW_BOT && from.is_bot) {
       return false
     }
@@ -365,16 +372,15 @@ module.exports = (log, argv, version) => {
    * @returns {Promise}
    */
   function reqPriceEditMsgPhoto(chatId, msgId, inputs, inputKeys) {
-    const priceImgApiUrl = getPriceImgApiUrl(...inputs)
+    const apiUrl = getPriceImgApiUrl(...inputs)
 
     return axios
-      .get(priceImgApiUrl, {
+      .get(apiUrl, {
         responseType: 'arraybuffer',
       })
       .then((res) => {
         const opt = getEditMsgPhotoOpt(chatId, msgId, res.data, {
           caption: getPriceCaption(...inputs),
-          parse_mode: 'HTML',
         })
         if (inputKeys) {
           opt.qs.reply_markup = {
@@ -393,16 +399,15 @@ module.exports = (log, argv, version) => {
    * @returns {Promise}
    */
   function reqChartEditMsgPhoto(chatId, msgId, inputs, inputKeys = null) {
-    const chartImgApiUrl = getChartImgApiUrl(...inputs)
+    const apiUrl = getChartImgApiUrl(...inputs)
 
     return axios
-      .get(chartImgApiUrl, {
+      .get(apiUrl, {
         responseType: 'arraybuffer',
       })
       .then((res) => {
         const opt = getEditMsgPhotoOpt(chatId, msgId, res.data, {
           caption: getChartCaption(...inputs),
-          parse_mode: 'HTML',
         })
         if (inputKeys) {
           opt.qs.reply_markup = {
@@ -456,7 +461,7 @@ module.exports = (log, argv, version) => {
       ...inputs,
       [
         {
-          text: 'BACK',
+          text: '« BACK',
           callback_data: cbKey,
         },
       ],
