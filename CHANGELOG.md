@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2021-12-03
+
+### Add
+
+- console option --log with default `VERBOSE`.
+- Telegram market screener command support: /overview, /performance, /oscillators and /moving_avgs.
+
+### Changed
+
+- Use parsed setting.
+- Input back button with character '« BACK'.
+- Chart study caption to ids only. eg. "EMA:50;EMA:200:RSI" to "EMA,RSI"
+- Telegram callback_query error handles without showing alerts and just sends error messages instead.
+
 ## [0.2.0] - 2021-12-01
 
 ### Fixed
