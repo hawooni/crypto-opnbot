@@ -1,6 +1,6 @@
 {
   "name": "@opnbot/crypto",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A simple crypto Telegram Bot based on chart-img.com API.",
   "license": "Apache-2.0",
   "author": "hawooni <developer@hawooni.com> (https://hawooni.com)",
