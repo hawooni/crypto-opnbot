@@ -433,7 +433,8 @@ module.exports = (log, argv, version) => {
   function getChartCaption(eSymbol, interval = null, studies = null) {
     const dInterval = interval || DEFAULT_CHART_INTERVAL
     const dStudies = studies || DEFAULT_CHART_STUDIES
-    return `${eSymbol.toUpperCase()} ${dInterval} ${dStudies.join(CHART_INPUT_STUDIES_SPLIT)}`
+    const studyIds = lodash.uniq(dStudies.map((dStudy) => dStudy.split(':')[0]))
+    return `${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}`
   }
 
   /**
