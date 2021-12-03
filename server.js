@@ -7,31 +7,27 @@ const srvTelegram = require('@src/telegram')
 const config = require('@config/setting')
 const { version } = require('./package.json')
 
-const log = winston.createLogger({ level: process.env.LOG })
-
 const argv = yargs
   .usage('Usage: npm start -- --options')
   .option('telegramToken', {
-    describe: 'Set telegram API Token',
-    demandOption: true,
     type: 'string',
+    describe: 'Set Telegram API Token',
     default: process.env.TELEGRAM_TOKEN || null,
-  })
-  .option('exchange', {
-    describe: 'Set default exchange',
-    type: 'string',
-    default: config.DEFAULT_EXCHANGE,
-  })
-  .option('symbol', {
-    describe: 'Set default symbol',
-    type: 'string',
-    default: config.DEFAULT_SYMBOL,
+    demandOption: true,
   })
   .option('rateLimit', {
-    describe: 'Set request rate limit',
     type: 'number',
-    default: config.TELEGRAM_RATE_LIMIT_USER,
+    describe: 'Set request rate limit',
+    default: () =>
+      parseInt(process.env.TELEGRAM_RATE_LIMIT_USER || config.TELEGRAM_RATE_LIMIT_USER),
+  })
+  .option('log', {
+    type: 'string',
+    describe: 'Set log level',
+    default: process.env.LOG || 'verbose',
   }).argv
+
+const log = winston.createLogger({ level: argv.log })
 
 log.info(`CryptOpnBot version ${version} (https://crypto.opnbot.com)`)
 
@@ -41,6 +37,22 @@ process.env.NTBA_FIX_350 = 1
 
 if (!Array.isArray(config.CHART_INPUT_STUDIES?.[0]?.value)) {
   log.warn('\nWarning: config setting CHART_INPUT_STUDIES String value is deprecated in v0.2.0+')
+}
+
+if (!config.INPUT_CHECK_CHAR) {
+  log.warn('\nWarning: config setting INPUT_CHECK_CHAR is required in v0.2.0+')
+}
+
+if (!config.CHART_INPUT_STUDIES_SPLIT) {
+  log.warn('\nWarning: config setting CHART_INPUT_STUDIES_SPLIT is required in v0.2.0+')
+}
+
+if (!config.MKT_SCREENER_LIST) {
+  log.warn('\nWarning: config setting MKT_SCREENER_LIST is required in v0.3.0+')
+}
+
+if (!config.MKT_SCREENER_CURRENCY) {
+  log.warn('\nWarning: config setting MKT_SCREENER_CURRENCY is required in v0.3.0+')
 }
 
 srvTelegram(log, argv, version)
