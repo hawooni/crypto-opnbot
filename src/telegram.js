@@ -4,46 +4,20 @@ const lodash = require('lodash')
 const NodeCache = require('node-cache')
 
 const MESSAGE = require('@config/message')
-const SETTING = require('@config/setting')
 
 const CB_ACTION_PRICE_SYMBOL = 'price-symbol'
 const CB_ACTION_CHART_SYMBOL = 'chart-symbol'
 const CB_ACTION_CHART_INTERVAL = 'chart-interval'
 const CB_ACTION_CHART_STUDIES = 'chart-studies'
 
-const CHART_IMG_API_KEY = process.env.CHART_IMG_API_KEY || null
-const BOT_NAME = process.env.BOT_NAME || SETTING.BOT_NAME
-const {
-  THEME_IMG,
-  DEFAULT_EXCHANGE,
-  DEFAULT_SYMBOL,
-  DEFAULT_PRICE_INTERVAL,
-  DEFAULT_CHART_INTERVAL,
-  DEFAULT_CHART_STUDIES,
-  DEFAULT_TIMEZONE,
-  INPUT_SYMBOLS,
-  INPUT_SYMBOLS_COLUMN,
-  INPUT_CHECK_CHAR,
-  PRICE_IMG_WIDTH,
-  PRICE_IMG_HEIGHT,
-  CHART_IMG_WIDTH,
-  CHART_IMG_HEIGHT,
-  CHART_INPUT_INTERVALS,
-  CHART_INPUT_STUDIES,
-  CHART_INPUT_STUDIES_COLUMN,
-  CHART_INPUT_STUDIES_SPLIT,
-  MKT_SCREENER_LIST,
-  MKT_SCREENER_CURRENCY,
-  TELEGRAM_ALLOW_BOT,
-  TELEGRAM_WHITE_LIST_IDS,
-  API_CHART_IMG_BASE_URL,
-} = SETTING
-
-module.exports = (log, argv, version) => {
+module.exports = (log, argv, version, setting) => {
   const TelegramBot = require('node-telegram-bot-api')
 
   const chatLimit = new NodeCache({ stdTTL: 60 }) // rate limit ttl per minute
   const teleBot = new TelegramBot(argv.telegramToken, { polling: true })
+
+  const BOT_NAME = process.env.BOT_NAME || setting.BOT_NAME
+  const CHART_IMG_API_KEY = process.env.CHART_IMG_API_KEY || null
 
   log.verbose('\nRunning Telegram Server ✓')
 
@@ -90,7 +64,7 @@ module.exports = (log, argv, version) => {
 
   teleBot.on('message', (payload, meta) => {
     const { from, text } = payload
-    const eSymbol = `${DEFAULT_EXCHANGE}:${DEFAULT_SYMBOL}`
+    const eSymbol = `${setting.DEFAULT_EXCHANGE}:${setting.DEFAULT_SYMBOL}`
 
     incrementChatCountLimit(from)
 
@@ -120,8 +94,8 @@ module.exports = (log, argv, version) => {
                     reply_markup: {
                       inline_keyboard: getChunkInputObjs(
                         CB_ACTION_PRICE_SYMBOL,
-                        INPUT_SYMBOLS,
-                        INPUT_SYMBOLS_COLUMN,
+                        setting.INPUT_SYMBOLS,
+                        setting.INPUT_SYMBOLS_COLUMN,
                         eSymbol
                       ),
                     },
@@ -138,8 +112,8 @@ module.exports = (log, argv, version) => {
                     reply_markup: {
                       inline_keyboard: getChunkInputObjs(
                         CB_ACTION_CHART_SYMBOL,
-                        INPUT_SYMBOLS,
-                        INPUT_SYMBOLS_COLUMN,
+                        setting.INPUT_SYMBOLS,
+                        setting.INPUT_SYMBOLS_COLUMN,
                         eSymbol
                       ),
                     },
@@ -203,7 +177,7 @@ module.exports = (log, argv, version) => {
                 )
             } else if (text.startsWith('/chart')) {
               const [eSymbol, interval, studies] = text.split(' ').slice(1)
-              const splitStudies = studies?.split(CHART_INPUT_STUDIES_SPLIT)
+              const splitStudies = studies?.split(setting.CHART_INPUT_STUDIES_SPLIT)
 
               return axios
                 .get(getChartImgApiUrl(eSymbol, interval, splitStudies), {
@@ -260,17 +234,17 @@ module.exports = (log, argv, version) => {
             if (cbKey === CB_ACTION_CHART_SYMBOL) {
               const inputs = getChunkInputValues(
                 `${CB_ACTION_CHART_INTERVAL}|${symbol}`,
-                CHART_INPUT_INTERVALS,
+                setting.CHART_INPUT_INTERVALS,
                 undefined,
-                interval || DEFAULT_CHART_INTERVAL
+                interval || setting.DEFAULT_CHART_INTERVAL
               )
               return reqChartEditMsgPhoto(chat.id, message_id, [symbol, interval], inputs)
             } else if (cbKey === CB_ACTION_CHART_INTERVAL) {
               const inputs = getChunkInputObjs(
                 `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
-                CHART_INPUT_STUDIES,
-                CHART_INPUT_STUDIES_COLUMN,
-                DEFAULT_CHART_STUDIES
+                setting.CHART_INPUT_STUDIES,
+                setting.CHART_INPUT_STUDIES_COLUMN,
+                setting.DEFAULT_CHART_STUDIES
               )
               return reqChartEditMsgPhoto(
                 chat.id,
@@ -279,11 +253,11 @@ module.exports = (log, argv, version) => {
                 getInputsInludeBack(inputs, `${CB_ACTION_CHART_SYMBOL}|${symbol}|${interval}`)
               )
             } else if (cbKey === CB_ACTION_CHART_STUDIES) {
-              const arrStudies = studies.split(CHART_INPUT_STUDIES_SPLIT)
+              const arrStudies = studies.split(setting.CHART_INPUT_STUDIES_SPLIT)
               const inputs = getChunkInputObjs(
                 `${CB_ACTION_CHART_STUDIES}|${symbol}|${interval}`,
-                CHART_INPUT_STUDIES,
-                CHART_INPUT_STUDIES_COLUMN,
+                setting.CHART_INPUT_STUDIES,
+                setting.CHART_INPUT_STUDIES_COLUMN,
                 arrStudies
               )
               return reqChartEditMsgPhoto(
@@ -299,8 +273,8 @@ module.exports = (log, argv, version) => {
                 [symbol],
                 getChunkInputObjs(
                   CB_ACTION_PRICE_SYMBOL,
-                  INPUT_SYMBOLS,
-                  INPUT_SYMBOLS_COLUMN,
+                  setting.INPUT_SYMBOLS,
+                  setting.INPUT_SYMBOLS_COLUMN,
                   symbol
                 )
               )
@@ -351,10 +325,13 @@ module.exports = (log, argv, version) => {
    * @returns {Boolean}
    */
   function isOkayToChat(from) {
-    if (!TELEGRAM_ALLOW_BOT && from.is_bot) {
+    if (!setting.TELEGRAM_ALLOW_BOT && from.is_bot) {
       return false
     }
-    if (TELEGRAM_WHITE_LIST_IDS.length > 0 && !TELEGRAM_WHITE_LIST_IDS.includes(from.id)) {
+    if (
+      setting.TELEGRAM_WHITE_LIST_IDS.length > 0 &&
+      !setting.TELEGRAM_WHITE_LIST_IDS.includes(from.id)
+    ) {
       return false
     }
     return true
@@ -375,12 +352,12 @@ module.exports = (log, argv, version) => {
    * @returns
    */
   function getPriceImgApiUrl(eSymbol, interval = null) {
-    return `${API_CHART_IMG_BASE_URL}/tradingview/mini-chart?${qs.stringify({
+    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/mini-chart?${qs.stringify({
       symbol: eSymbol,
-      interval: interval || DEFAULT_PRICE_INTERVAL,
-      width: PRICE_IMG_WIDTH,
-      height: PRICE_IMG_HEIGHT,
-      theme: THEME_IMG,
+      interval: interval || setting.DEFAULT_PRICE_INTERVAL,
+      width: setting.PRICE_IMG_WIDTH,
+      height: setting.PRICE_IMG_HEIGHT,
+      theme: setting.THEME_IMG,
     })}`
   }
 
@@ -391,14 +368,14 @@ module.exports = (log, argv, version) => {
    * @returns
    */
   function getChartImgApiUrl(eSymbol, interval = null, studies = null) {
-    return `${API_CHART_IMG_BASE_URL}/tradingview/advanced-chart?${qs.stringify({
+    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/advanced-chart?${qs.stringify({
       symbol: eSymbol,
-      interval: interval || DEFAULT_CHART_INTERVAL,
-      studies: studies || DEFAULT_CHART_STUDIES,
-      width: CHART_IMG_WIDTH,
-      height: CHART_IMG_HEIGHT,
-      theme: THEME_IMG,
-      timezone: DEFAULT_TIMEZONE,
+      interval: interval || setting.DEFAULT_CHART_INTERVAL,
+      studies: studies || setting.DEFAULT_CHART_STUDIES,
+      width: setting.CHART_IMG_WIDTH,
+      height: setting.CHART_IMG_HEIGHT,
+      theme: setting.THEME_IMG,
+      timezone: setting.DEFAULT_TIMEZONE,
     })}`
   }
 
@@ -407,11 +384,11 @@ module.exports = (log, argv, version) => {
    * @returns {Object}
    */
   function getMktScreenerImgApiUrl(type) {
-    return `${API_CHART_IMG_BASE_URL}/tradingview/mkt-screener?${qs.stringify({
+    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/mkt-screener?${qs.stringify({
       type: type,
-      list: MKT_SCREENER_LIST,
-      currency: MKT_SCREENER_CURRENCY,
-      theme: THEME_IMG,
+      list: setting.MKT_SCREENER_LIST,
+      currency: setting.MKT_SCREENER_CURRENCY,
+      theme: setting.THEME_IMG,
     })}`
   }
 
@@ -421,7 +398,7 @@ module.exports = (log, argv, version) => {
    * @returns {String} price image caption
    */
   function getPriceCaption(eSymbol, interval = null) {
-    return `${eSymbol.toUpperCase()} ${interval || DEFAULT_PRICE_INTERVAL}`
+    return `${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}`
   }
 
   /**
@@ -431,8 +408,8 @@ module.exports = (log, argv, version) => {
    * @returns {String} chart image caption
    */
   function getChartCaption(eSymbol, interval = null, studies = null) {
-    const dInterval = interval || DEFAULT_CHART_INTERVAL
-    const dStudies = studies || DEFAULT_CHART_STUDIES
+    const dInterval = interval || setting.DEFAULT_CHART_INTERVAL
+    const dStudies = studies || setting.DEFAULT_CHART_STUDIES
     const studyIds = lodash.uniq(dStudies.map((dStudy) => dStudy.split(':')[0]))
     return `${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}`
   }
@@ -445,9 +422,9 @@ module.exports = (log, argv, version) => {
     const url = getMktScreenerImgApiUrl(type)
 
     if (type === 'moving_averages') {
-      return `<a href="${url}">Market Moving Averages Top ${MKT_SCREENER_LIST}</a>`
+      return `<a href="${url}">Market Moving Averages Top ${setting.MKT_SCREENER_LIST}</a>`
     }
-    return `<a href="${url}">Market ${ucfirst(type)} Top ${MKT_SCREENER_LIST}</a>`
+    return `<a href="${url}">Market ${ucfirst(type)} Top ${setting.MKT_SCREENER_LIST}</a>`
   }
 
   /**
@@ -569,7 +546,7 @@ module.exports = (log, argv, version) => {
   function getChunkInputValues(cbKeys, values, limit = null, checkValue = null) {
     const inputs = values.map((value) => {
       return {
-        text: checkValue === value ? `${value} ${INPUT_CHECK_CHAR}` : value,
+        text: checkValue === value ? `${value} ${setting.INPUT_CHECK_CHAR}` : value,
         callback_data: `${cbKeys}|${value}`,
       }
     })
@@ -589,12 +566,12 @@ module.exports = (log, argv, version) => {
     const inputs = objs.map((obj) => {
       if (Array.isArray(obj.value)) {
         return {
-          text: checkValue.toString() === obj.value.toString() ? `${obj.text} ${INPUT_CHECK_CHAR}` : obj.text, // prettier-ignore
-          callback_data: `${cbKey}|${obj.value.join(CHART_INPUT_STUDIES_SPLIT)}`,
+          text: checkValue.toString() === obj.value.toString() ? `${obj.text} ${setting.INPUT_CHECK_CHAR}` : obj.text, // prettier-ignore
+          callback_data: `${cbKey}|${obj.value.join(setting.CHART_INPUT_STUDIES_SPLIT)}`,
         }
       } else {
         return {
-          text: checkValue === obj.value ? `${obj.text} ${INPUT_CHECK_CHAR}` : obj.text,
+          text: checkValue === obj.value ? `${obj.text} ${setting.INPUT_CHECK_CHAR}` : obj.text,
           callback_data: `${cbKey}|${obj.value}`,
         }
       }
