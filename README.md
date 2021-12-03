@@ -73,3 +73,19 @@ hawooni/crypto-opnbot:latest
 ![/chart](doc/image/chart-interval.png?raw=true)
 
 ![/chart](doc/image/chart-indicator.png?raw=true)
+
+### /overview
+
+![/overview](doc/image/overview.png?raw=true)
+
+### /performance
+
+![/performance](doc/image/performance.png?raw=true)
+
+### /oscillators
+
+![/oscillators](doc/image/oscillators.png?raw=true)
+
+### /moving_avgs
+
+![/moving_avgs](doc/image/moving_avgs.png?raw=true)
