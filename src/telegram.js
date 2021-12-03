@@ -32,6 +32,8 @@ const {
   CHART_INPUT_STUDIES,
   CHART_INPUT_STUDIES_COLUMN,
   CHART_INPUT_STUDIES_SPLIT,
+  MKT_SCREENER_LIST,
+  MKT_SCREENER_CURRENCY,
   TELEGRAM_ALLOW_BOT,
   TELEGRAM_WHITE_LIST_IDS,
   API_CHART_IMG_BASE_URL,
@@ -54,19 +56,35 @@ module.exports = (log, argv, version) => {
   teleBot.setMyCommands([
     {
       command: '/start',
-      description: 'Show Welcome Message.',
+      description: 'Welcome Message.',
     },
     {
       command: '/price',
-      description: 'Show Mini Price Chart.',
+      description: 'Mini Price Chart.',
     },
     {
       command: '/chart',
-      description: 'Show Advanced Chart.',
+      description: 'Advanced Chart.',
+    },
+    {
+      command: '/overview',
+      description: 'Market Overview.',
+    },
+    {
+      command: '/performance',
+      description: 'Market Performance.',
+    },
+    {
+      command: '/oscillators',
+      description: 'Market Oscillators.',
+    },
+    {
+      command: '/moving_avgs',
+      description: 'Market Moving Averages.',
     },
     {
       command: '/example',
-      description: 'Show command examples.',
+      description: 'command examples.',
     },
   ])
 
@@ -125,6 +143,50 @@ module.exports = (log, argv, version) => {
                         eSymbol
                       ),
                     },
+                  })
+                )
+            } else if (text === '/overview') {
+              return axios
+                .get(getMktScreenerImgApiUrl('overview'), {
+                  responseType: 'arraybuffer',
+                })
+                .then((res) =>
+                  teleBot.sendPhoto(from.id, res.data, {
+                    caption: getMktScreenerCaption('overview'),
+                    parse_mode: 'HTML',
+                  })
+                )
+            } else if (text === '/performance') {
+              return axios
+                .get(getMktScreenerImgApiUrl('performance'), {
+                  responseType: 'arraybuffer',
+                })
+                .then((res) =>
+                  teleBot.sendPhoto(from.id, res.data, {
+                    caption: getMktScreenerCaption('performance'),
+                    parse_mode: 'HTML',
+                  })
+                )
+            } else if (text === '/oscillators') {
+              return axios
+                .get(getMktScreenerImgApiUrl('oscillators'), {
+                  responseType: 'arraybuffer',
+                })
+                .then((res) =>
+                  teleBot.sendPhoto(from.id, res.data, {
+                    caption: getMktScreenerCaption('oscillators'),
+                    parse_mode: 'HTML',
+                  })
+                )
+            } else if (text === '/moving_avgs') {
+              return axios
+                .get(getMktScreenerImgApiUrl('moving_averages'), {
+                  responseType: 'arraybuffer',
+                })
+                .then((res) =>
+                  teleBot.sendPhoto(from.id, res.data, {
+                    caption: getMktScreenerCaption('moving_averages'),
+                    parse_mode: 'HTML',
                   })
                 )
             } else if (text.startsWith('/price')) {
@@ -341,6 +403,19 @@ module.exports = (log, argv, version) => {
   }
 
   /**
+   * @param {String} type
+   * @returns {Object}
+   */
+  function getMktScreenerImgApiUrl(type) {
+    return `${API_CHART_IMG_BASE_URL}/tradingview/mkt-screener?${qs.stringify({
+      type: type,
+      list: MKT_SCREENER_LIST,
+      currency: MKT_SCREENER_CURRENCY,
+      theme: THEME_IMG,
+    })}`
+  }
+
+  /**
    * @param {String} eSymbol
    * @param {String} interval
    * @returns {String} price image caption
@@ -359,6 +434,19 @@ module.exports = (log, argv, version) => {
     const dInterval = interval || DEFAULT_CHART_INTERVAL
     const dStudies = studies || DEFAULT_CHART_STUDIES
     return `${eSymbol.toUpperCase()} ${dInterval} ${dStudies.join(CHART_INPUT_STUDIES_SPLIT)}`
+  }
+
+  /**
+   * @param {String} type
+   * @returns {String}
+   */
+  function getMktScreenerCaption(type) {
+    const url = getMktScreenerImgApiUrl(type)
+
+    if (type === 'moving_averages') {
+      return `<a href="${url}">Market Moving Averages Top ${MKT_SCREENER_LIST}</a>`
+    }
+    return `<a href="${url}">Market ${ucfirst(type)} Top ${MKT_SCREENER_LIST}</a>`
   }
 
   /**
@@ -526,6 +614,16 @@ module.exports = (log, argv, version) => {
       chatLimit.set(from.id, 1)
       log.debug(`:: debug :: ${from.first_name} :: increment chat count rateLimit :: 1`)
     }
+  }
+
+  /**
+   * capitalize first letter
+   *
+   * @param {String} string
+   * @returns {String}
+   */
+  function ucfirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1)
   }
 
   /**
