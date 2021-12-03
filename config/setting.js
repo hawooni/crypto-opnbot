@@ -12,11 +12,18 @@ module.exports = {
 
   THEME_IMG: 'dark', // dark,light
 
+  // api key dependent
   PRICE_IMG_WIDTH: 550,
   PRICE_IMG_HEIGHT: 300,
 
+  // api key dependent
   CHART_IMG_WIDTH: 800,
   CHART_IMG_HEIGHT: 600,
+
+  // api key dependent
+  MKT_SCREENER_LIST: 25,
+
+  MKT_SCREENER_CURRENCY: 'USD', // USD,BTC
 
   INPUT_CHECK_CHAR: '✓',
   INPUT_SYMBOLS_COLUMN: 4,
