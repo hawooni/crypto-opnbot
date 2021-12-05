@@ -2,12 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1] - 2021-12-05
+
+### Added
+
+- `/chart` and `/price` caption with external link.
+
+### Changed
+
+- doc image example.png.
+- Too many request messages by sendMessage() for consistency.
+
+### Fixed
+
+- `/start` incorrect github link.
+- `/example` incorrect chart technical indicator.
+
 ## [0.3.0] - 2021-12-03
 
-### Add
+### Added
 
 - console option --log with default `VERBOSE`.
-- Telegram market screener command support: /overview, /performance, /oscillators and /moving_avgs.
+- Telegram market screener command support: `/overview`, `/performance`, `/oscillators` and `/moving_avgs`.
 
 ### Changed
 
@@ -18,19 +34,19 @@ All notable changes to this project will be documented in this file.
 
 ## [0.2.0] - 2021-12-01
 
-### Fixed
+### Added
 
-- /chart STUDIES delimiter changed to ';' from ',' due to conflicts with studies parameters.
+- `/chart` include input 'back' button.
+- Handle callback query error 403 Forbidden by sending a message "Please `/start` to re-initiate a conversation."
 
 ### Changed
 
 - config setting.js CHART_INPUT_STUDIES value must be an array.
 - config setting.js DEFAULT_CHART_STUDIES setting change to ['EMA:50', 'EMA:200', 'RSI'].
 
-### Added
+### Fixed
 
-- /chart include input 'back' button.
-- Handle callback query error 403 Forbidden by sending a message "Please /start to re-initiate a conversation."
+- `/chart` STUDIES delimiter changed to ';' from ',' due to conflicts with studies parameters.
 
 ## [0.1.0] - 2021-11-27
 
