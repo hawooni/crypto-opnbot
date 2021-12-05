@@ -8,15 +8,37 @@ http://t.me/CryptoOpnBot
 
 You can use this bot if you don't want to customize your own. It will always run with the latest version.
 
-## Setup
-
-Customize preset settings by modifying `config/setting.js`. Refer to CHART-IMG [Documentation](https://doc.chart-img.com) for a more detailed configuration.
-
-### Limitation
+## Limitation
 
 - Currently, [CHART-IMG](https://doc.chart-img.com) only supports screenshot image resolution only up to `800x600` with `15` req/min. It will support a higher resolution and rate limit in the future with API-Key.
 
-### .env file
+## Setup
+
+### Clone the repo
+
+```
+git clone https://github.com/hawooni/crypto-opnbot
+
+cd crypto-opnbot
+```
+
+### Setting
+
+Customize preset settings by modifying `config/setting.js`. Refer to CHART-IMG [Documentation](https://doc.chart-img.com) for a more detailed configuration.
+
+```
+module.exports = {
+  DEFAULT_SYMBOL: 'BTCUSDT',
+  DEFAULT_EXCHANGE: 'BINANCE',
+  DEFAULT_PRICE_INTERVAL: '3M',
+  DEFAULT_CHART_INTERVAL: '1d',
+  DEFAULT_CHART_STUDIES: ['EMA:50', 'EMA:200', 'RSI'],
+  DEFAULT_TIMEZONE: 'Etc/UTC',
+  ...
+}
+```
+
+### Environment Variable
 
 You should create .env file with the following variable(s):
 
@@ -36,11 +58,6 @@ CHART_IMG_API_KEY=<your_chart_img_api_key>
 ### NPM
 
 ```
-git clone https://github.com/hawooni/crypto-opnbot
-
-cd crypto-opnbot
-
-npm i
 npm start -- --telegramToken=<your_telegram_token>
 ```
 
