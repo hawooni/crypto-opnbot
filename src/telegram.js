@@ -225,10 +225,7 @@ module.exports = (log, argv, version, setting) => {
     Promise.resolve()
       .then(() => {
         if (isRateLimitExceed(from)) {
-          return teleBot.answerCallbackQuery(cbQuery.id, {
-            text: MESSAGE.TOO_MANY_REQUEST,
-            show_alert: true,
-          })
+          return teleBot.sendMessage(from.id, MESSAGE.TOO_MANY_REQUEST)
         } else if (isOkayToChat(from)) {
           if (symbol) {
             if (cbKey === CB_ACTION_CHART_SYMBOL) {
