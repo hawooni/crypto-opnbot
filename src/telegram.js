@@ -91,6 +91,7 @@ module.exports = (log, argv, version, setting) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getPriceCaption(eSymbol),
+                    parse_mode: 'HTML',
                     reply_markup: {
                       inline_keyboard: getChunkInputObjs(
                         CB_ACTION_PRICE_SYMBOL,
@@ -109,6 +110,7 @@ module.exports = (log, argv, version, setting) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getChartCaption(eSymbol),
+                    parse_mode: 'HTML',
                     reply_markup: {
                       inline_keyboard: getChunkInputObjs(
                         CB_ACTION_CHART_SYMBOL,
@@ -173,6 +175,7 @@ module.exports = (log, argv, version, setting) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getPriceCaption(eSymbol, interval),
+                    parse_mode: 'HTML',
                   })
                 )
             } else if (text.startsWith('/chart')) {
@@ -186,6 +189,7 @@ module.exports = (log, argv, version, setting) => {
                 .then((res) =>
                   teleBot.sendPhoto(from.id, res.data, {
                     caption: getChartCaption(eSymbol, interval, splitStudies),
+                    parse_mode: 'HTML',
                   })
                 )
             } else if (text.startsWith('/example')) {
@@ -395,7 +399,8 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} price image caption
    */
   function getPriceCaption(eSymbol, interval = null) {
-    return `${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}`
+    const url = getPriceImgApiUrl(eSymbol, interval)
+    return `<a href="${url}">${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}</a>` // prettier-ignore
   }
 
   /**
@@ -405,10 +410,11 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} chart image caption
    */
   function getChartCaption(eSymbol, interval = null, studies = null) {
+    const url = getChartImgApiUrl(eSymbol, interval, studies)
     const dInterval = interval || setting.DEFAULT_CHART_INTERVAL
     const dStudies = studies || setting.DEFAULT_CHART_STUDIES
     const studyIds = lodash.uniq(dStudies.map((dStudy) => dStudy.split(':')[0]))
-    return `${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}`
+    return `<a href="${url}">${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}</a>`
   }
 
   /**
@@ -444,6 +450,7 @@ module.exports = (log, argv, version, setting) => {
       .then((res) => {
         const opt = getEditMsgPhotoOpt(chatId, msgId, res.data, {
           caption: getPriceCaption(...inputs),
+          parse_mode: 'HTML',
         })
         if (inputKeys) {
           opt.qs.reply_markup = {
@@ -471,6 +478,7 @@ module.exports = (log, argv, version, setting) => {
       .then((res) => {
         const opt = getEditMsgPhotoOpt(chatId, msgId, res.data, {
           caption: getChartCaption(...inputs),
+          parse_mode: 'HTML',
         })
         if (inputKeys) {
           opt.qs.reply_markup = {
