@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2] - 2021-12-06
+
+### Changed
+
+- Telebot sendMessage() to use chat id.
+
+### Fixed
+
+- Override telebot \_request() to handle 403 error with message.
+- `/chart` and `/price` caption external link to use default size.
+
 ## [0.3.1] - 2021-12-05
 
 ### Added
@@ -10,7 +21,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- doc image example.png.
+- Doc image `example.png`.
 - Too many request messages by sendMessage() for consistency.
 
 ### Fixed
@@ -22,7 +33,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- console option --log with default `VERBOSE`.
+- Console option --log with default `VERBOSE`.
 - Telegram market screener command support: `/overview`, `/performance`, `/oscillators` and `/moving_avgs`.
 
 ### Changed
@@ -41,12 +52,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- config setting.js CHART_INPUT_STUDIES value must be an array.
-- config setting.js DEFAULT_CHART_STUDIES setting change to ['EMA:50', 'EMA:200', 'RSI'].
+- config setting.js `CHART_INPUT_STUDIES` value must be an array.
+- config setting.js `DEFAULT_CHART_STUDIES` setting change to ['EMA:50', 'EMA:200', 'RSI'].
 
 ### Fixed
 
-- `/chart` STUDIES delimiter changed to ';' from ',' due to conflicts with studies parameters.
+- `/chart` `STUDIES` delimiter changed to ';' from ',' due to conflicts with studies parameters.
 
 ## [0.1.0] - 2021-11-27
 
