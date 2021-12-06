@@ -11,7 +11,7 @@ const CB_ACTION_CHART_INTERVAL = 'chart-interval'
 const CB_ACTION_CHART_STUDIES = 'chart-studies'
 
 module.exports = (log, argv, version, setting) => {
-  const TelegramBot = require('node-telegram-bot-api')
+  const TelegramBot = require('@lib/telegram')
 
   const chatLimit = new NodeCache({ stdTTL: 60 }) // rate limit ttl per minute
   const teleBot = new TelegramBot(argv.telegramToken, { polling: true })
@@ -30,7 +30,7 @@ module.exports = (log, argv, version, setting) => {
   teleBot.setMyCommands([
     {
       command: '/start',
-      description: 'Welcome Message.',
+      description: 'Start Message.',
     },
     {
       command: '/price',
@@ -58,12 +58,12 @@ module.exports = (log, argv, version, setting) => {
     },
     {
       command: '/example',
-      description: 'command examples.',
+      description: 'Command examples.',
     },
   ])
 
   teleBot.on('message', (payload, meta) => {
-    const { from, text } = payload
+    const { from, text, chat } = payload
     const eSymbol = `${setting.DEFAULT_EXCHANGE}:${setting.DEFAULT_SYMBOL}`
 
     incrementChatCountLimit(from)
@@ -73,11 +73,11 @@ module.exports = (log, argv, version, setting) => {
         if (meta.type === 'text') {
           if (isRateLimitExceed(from)) {
             log.debug(`:: debug :: ${from.first_name} :: ${MESSAGE.TOO_MANY_REQUEST}`)
-            return teleBot.sendMessage(from.id, MESSAGE.TOO_MANY_REQUEST)
+            return teleBot.sendMessage(chat.id, MESSAGE.TOO_MANY_REQUEST)
           } else if (isOkayToChat(from)) {
             if (text === '/start') {
               return teleBot.sendMessage(
-                from.id,
+                chat.id,
                 MESSAGE.TELEGRAM_START.replace('{{botName}}', BOT_NAME),
                 {
                   parse_mode: 'HTML',
@@ -89,7 +89,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getPriceCaption(eSymbol),
                     parse_mode: 'HTML',
                     reply_markup: {
@@ -108,7 +108,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getChartCaption(eSymbol),
                     parse_mode: 'HTML',
                     reply_markup: {
@@ -127,7 +127,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getMktScreenerCaption('overview'),
                     parse_mode: 'HTML',
                   })
@@ -138,7 +138,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getMktScreenerCaption('performance'),
                     parse_mode: 'HTML',
                   })
@@ -149,7 +149,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getMktScreenerCaption('oscillators'),
                     parse_mode: 'HTML',
                   })
@@ -160,7 +160,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getMktScreenerCaption('moving_averages'),
                     parse_mode: 'HTML',
                   })
@@ -173,7 +173,7 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getPriceCaption(eSymbol, interval),
                     parse_mode: 'HTML',
                   })
@@ -187,17 +187,17 @@ module.exports = (log, argv, version, setting) => {
                   responseType: 'arraybuffer',
                 })
                 .then((res) =>
-                  teleBot.sendPhoto(from.id, res.data, {
+                  teleBot.sendPhoto(chat.id, res.data, {
                     caption: getChartCaption(eSymbol, interval, splitStudies),
                     parse_mode: 'HTML',
                   })
                 )
             } else if (text.startsWith('/example')) {
-              return teleBot.sendMessage(from.id, MESSAGE.TELEGRAM_EXAMPLE, {
+              return teleBot.sendMessage(chat.id, MESSAGE.TELEGRAM_EXAMPLE, {
                 parse_mode: 'HTML',
               })
             } else {
-              return teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST)
+              return teleBot.sendMessage(chat.id, MESSAGE.INVALID_REQUEST)
             }
           } else {
             log.debug(`:: debug :: ${from.first_name} :: ignore message`)
@@ -206,17 +206,7 @@ module.exports = (log, argv, version, setting) => {
           log.debug(`:: debug :: ${from.first_name} :: ignore non-text message`)
         }
       })
-      .catch((error) => {
-        const logErrMsg = `${from.first_name} :: ${text} :: ${error.message}`
-
-        if (error.response?.status === 422) {
-          log.debug(`:: debug :: ${logErrMsg}`)
-          teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
-        } else {
-          log.error(logErrMsg)
-          teleBot.sendMessage(from.id, error.message)
-        }
-      })
+      .catch((error) => handleError(error, from, text))
   })
 
   teleBot.on('callback_query', (cbQuery) => {
@@ -229,7 +219,7 @@ module.exports = (log, argv, version, setting) => {
     Promise.resolve()
       .then(() => {
         if (isRateLimitExceed(from)) {
-          return teleBot.sendMessage(from.id, MESSAGE.TOO_MANY_REQUEST)
+          return teleBot.sendMessage(chat.id, MESSAGE.TOO_MANY_REQUEST)
         } else if (isOkayToChat(from)) {
           if (symbol) {
             if (cbKey === CB_ACTION_CHART_SYMBOL) {
@@ -285,25 +275,8 @@ module.exports = (log, argv, version, setting) => {
           }
         }
       })
-      .catch((error) => {
-        const logErrMsg = `${from.first_name} :: ${data} :: ${error.message}`
-
-        if (error.response?.statusCode === 400) {
-          log.debug(logErrMsg) // telebot.req bad request by the user
-        } else if (error.response?.statusCode === 403) {
-          log.debug(logErrMsg)
-          teleBot.sendMessage(from.id, 'Please /start to re-initiate a conversation.') // telebot.req
-        } else if (error.response?.status === 422) {
-          log.error(logErrMsg)
-          teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
-        } else {
-          log.error(logErrMsg)
-          teleBot.sendMessage(from.id, error.message)
-        }
-      })
-      .finally(() => {
-        teleBot.answerCallbackQuery(cbQuery.id)
-      })
+      .catch((error) => handleError(error, from, data))
+      .finally(() => teleBot.answerCallbackQuery(cbQuery.id))
   })
 
   teleBot.on('polling_error', (error) => {
@@ -314,6 +287,10 @@ module.exports = (log, argv, version, setting) => {
   teleBot.on('error', (error) => {
     log.error(error.message)
     destruct()
+  })
+
+  process.on('unhandledRejection', (error) => {
+    log.error(error.message)
   })
 
   process.on('SIGINT', () => {
@@ -607,6 +584,30 @@ module.exports = (log, argv, version, setting) => {
    */
   function ucfirst(string) {
     return string.charAt(0).toUpperCase() + string.slice(1)
+  }
+
+  /**
+   * @param {Error} error
+   * @param {Object} from
+   * @param {*|null} data
+   * @returns {Promise}
+   */
+  function handleError(error, from, data = null) {
+    const logErrMsg = `${from.first_name} :: ${error.message}`
+
+    data && log.debug(`:: debug :: ${data}`)
+
+    return Promise.resolve().then(() => {
+      if (error.response?.statusCode === 400) {
+        log.debug(`:: debug :: ${logErrMsg}`) // telebot.req bad request by the user
+      } else if (error.response?.status === 422) {
+        log.debug(`:: debug :: ${logErrMsg}`)
+        return teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
+      } else {
+        log.error(logErrMsg)
+        return teleBot.sendMessage(from.id, error.message)
+      }
+    })
   }
 
   /**
