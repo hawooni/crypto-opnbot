@@ -291,6 +291,7 @@ module.exports = (log, argv, version, setting) => {
 
   process.on('unhandledRejection', (error) => {
     log.error(error.message)
+    log.level === 'debug' && console.error(error)
   })
 
   process.on('SIGINT', () => {
@@ -609,11 +610,11 @@ module.exports = (log, argv, version, setting) => {
       if (error.response?.statusCode === 400) {
         log.debug(`:: debug :: ${logErrMsg}`) // telebot.req bad request by the user
       } else if (error.response?.status === 422) {
-        log.debug(`:: debug :: ${logErrMsg}`)
+        log.debug(`:: debug :: ${logErrMsg} :: ${error.response?.data?.toString()}`)
         return teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
       } else {
         log.error(logErrMsg)
-        return teleBot.sendMessage(from.id, error.message)
+        return teleBot.sendMessage(from.id, 'Something Went Wrong. Please try again later.')
       }
     })
   }
