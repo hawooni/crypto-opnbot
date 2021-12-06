@@ -327,34 +327,42 @@ module.exports = (log, argv, version, setting) => {
    * @param {String} eSymbol eg. 'BINANCE:BTCUSDT'
    * @param {String|null} interval  eg. '4h'
    * @param {String[]|null} studies eg. ['RSI', 'MACD', ...]
-   * @returns
+   * @param {Boolean|true} size
+   * @returns {String}
    */
-  function getPriceImgApiUrl(eSymbol, interval = null) {
-    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/mini-chart?${qs.stringify({
+  function getPriceImgApiUrl(eSymbol, interval = null, size = true) {
+    const query = {
       symbol: eSymbol,
       interval: interval || setting.DEFAULT_PRICE_INTERVAL,
-      width: setting.PRICE_IMG_WIDTH,
-      height: setting.PRICE_IMG_HEIGHT,
       theme: setting.THEME_IMG,
-    })}`
+    }
+    if (size) {
+      query.width = setting.PRICE_IMG_WIDTH
+      query.height = setting.PRICE_IMG_HEIGHT
+    }
+    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/mini-chart?${qs.stringify(query)}`
   }
 
   /**
    * @param {String} eSymbol eg. 'BINANCE:BTCUSDT'
    * @param {String|null} interval  eg. '4h'
    * @param {String[]|null} studies eg. ['RSI', 'MACD', ...]
-   * @returns
+   * @param {Boolean|true} size
+   * @returns {String}
    */
-  function getChartImgApiUrl(eSymbol, interval = null, studies = null) {
-    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/advanced-chart?${qs.stringify({
+  function getChartImgApiUrl(eSymbol, interval = null, studies = null, size = true) {
+    const query = {
       symbol: eSymbol,
       interval: interval || setting.DEFAULT_CHART_INTERVAL,
       studies: studies || setting.DEFAULT_CHART_STUDIES,
-      width: setting.CHART_IMG_WIDTH,
-      height: setting.CHART_IMG_HEIGHT,
       theme: setting.THEME_IMG,
       timezone: setting.DEFAULT_TIMEZONE,
-    })}`
+    }
+    if (size) {
+      query.width = setting.CHART_IMG_WIDTH
+      query.height = setting.CHART_IMG_HEIGHT
+    }
+    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/advanced-chart?${qs.stringify(query)}`
   }
 
   /**
@@ -376,7 +384,7 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} price image caption
    */
   function getPriceCaption(eSymbol, interval = null) {
-    const url = getPriceImgApiUrl(eSymbol, interval)
+    const url = getPriceImgApiUrl(eSymbol, interval, false) // external to use default size
     return `<a href="${url}">${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}</a>` // prettier-ignore
   }
 
@@ -387,7 +395,7 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} chart image caption
    */
   function getChartCaption(eSymbol, interval = null, studies = null) {
-    const url = getChartImgApiUrl(eSymbol, interval, studies)
+    const url = getChartImgApiUrl(eSymbol, interval, studies, false) // external to use default size
     const dInterval = interval || setting.DEFAULT_CHART_INTERVAL
     const dStudies = studies || setting.DEFAULT_CHART_STUDIES
     const studyIds = lodash.uniq(dStudies.map((dStudy) => dStudy.split(':')[0]))
