@@ -62,7 +62,7 @@ module.exports = (log, argv, version, setting) => {
     },
   ])
 
-  teleBot.on('message', (payload, meta) => {
+  teleBot.on('message', (payload) => {
     const { from, text, chat } = payload
     const eSymbol = `${setting.DEFAULT_EXCHANGE}:${setting.DEFAULT_SYMBOL}`
 
@@ -70,140 +70,137 @@ module.exports = (log, argv, version, setting) => {
 
     Promise.resolve()
       .then(() => {
-        if (meta.type === 'text') {
-          if (isRateLimitExceed(from)) {
-            log.debug(`:: debug :: ${from.first_name} :: ${MESSAGE.TOO_MANY_REQUEST}`)
-            return teleBot.sendMessage(chat.id, MESSAGE.TOO_MANY_REQUEST)
-          } else if (isOkayToChat(from)) {
-            if (text === '/start') {
-              return teleBot.sendMessage(
-                chat.id,
-                MESSAGE.TELEGRAM_START.replace('{{botName}}', BOT_NAME),
-                {
-                  parse_mode: 'HTML',
-                }
-              )
-            } else if (text === '/price') {
-              return axios
-                .get(getPriceImgApiUrl(eSymbol), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getPriceCaption(eSymbol),
-                    parse_mode: 'HTML',
-                    reply_markup: {
-                      inline_keyboard: getChunkInputObjs(
-                        CB_ACTION_PRICE_SYMBOL,
-                        setting.INPUT_SYMBOLS,
-                        setting.INPUT_SYMBOLS_COLUMN,
-                        eSymbol
-                      ),
-                    },
-                  })
-                )
-            } else if (text === '/chart') {
-              return axios
-                .get(getChartImgApiUrl(eSymbol), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getChartCaption(eSymbol),
-                    parse_mode: 'HTML',
-                    reply_markup: {
-                      inline_keyboard: getChunkInputObjs(
-                        CB_ACTION_CHART_SYMBOL,
-                        setting.INPUT_SYMBOLS,
-                        setting.INPUT_SYMBOLS_COLUMN,
-                        eSymbol
-                      ),
-                    },
-                  })
-                )
-            } else if (text === '/overview') {
-              return axios
-                .get(getMktScreenerImgApiUrl('overview'), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getMktScreenerCaption('overview'),
-                    parse_mode: 'HTML',
-                  })
-                )
-            } else if (text === '/performance') {
-              return axios
-                .get(getMktScreenerImgApiUrl('performance'), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getMktScreenerCaption('performance'),
-                    parse_mode: 'HTML',
-                  })
-                )
-            } else if (text === '/oscillators') {
-              return axios
-                .get(getMktScreenerImgApiUrl('oscillators'), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getMktScreenerCaption('oscillators'),
-                    parse_mode: 'HTML',
-                  })
-                )
-            } else if (text === '/moving_avgs') {
-              return axios
-                .get(getMktScreenerImgApiUrl('moving_averages'), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getMktScreenerCaption('moving_averages'),
-                    parse_mode: 'HTML',
-                  })
-                )
-            } else if (text.startsWith('/price')) {
-              const [eSymbol, interval] = text.split(' ').slice(1)
-
-              return axios
-                .get(getPriceImgApiUrl(eSymbol, interval), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getPriceCaption(eSymbol, interval),
-                    parse_mode: 'HTML',
-                  })
-                )
-            } else if (text.startsWith('/chart')) {
-              const [eSymbol, interval, studies] = text.split(' ').slice(1)
-              const splitStudies = studies?.split(setting.CHART_INPUT_STUDIES_SPLIT)
-
-              return axios
-                .get(getChartImgApiUrl(eSymbol, interval, splitStudies), {
-                  responseType: 'arraybuffer',
-                })
-                .then((res) =>
-                  teleBot.sendPhoto(chat.id, res.data, {
-                    caption: getChartCaption(eSymbol, interval, splitStudies),
-                    parse_mode: 'HTML',
-                  })
-                )
-            } else if (text.startsWith('/example')) {
-              return teleBot.sendMessage(chat.id, MESSAGE.TELEGRAM_EXAMPLE, {
+        if (isRateLimitExceed(from)) {
+          log.debug(`:: debug :: ${from.first_name} :: ${MESSAGE.TOO_MANY_REQUEST}`)
+          return teleBot.sendMessage(chat.id, MESSAGE.TOO_MANY_REQUEST)
+        } else if (isOkayToChat(from)) {
+          if (text === '/start') {
+            return teleBot.sendMessage(
+              chat.id,
+              MESSAGE.TELEGRAM_START.replace('{{botName}}', BOT_NAME),
+              {
                 parse_mode: 'HTML',
+              }
+            )
+          } else if (text === '/price') {
+            return axios
+              .get(getPriceImgApiUrl(eSymbol), {
+                responseType: 'arraybuffer',
               })
-            } else {
-              return teleBot.sendMessage(chat.id, MESSAGE.INVALID_REQUEST)
-            }
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getPriceCaption(eSymbol),
+                  parse_mode: 'HTML',
+                  reply_markup: {
+                    inline_keyboard: getChunkInputObjs(
+                      CB_ACTION_PRICE_SYMBOL,
+                      setting.INPUT_SYMBOLS,
+                      setting.INPUT_SYMBOLS_COLUMN,
+                      eSymbol
+                    ),
+                  },
+                })
+              )
+          } else if (text === '/chart') {
+            return axios
+              .get(getChartImgApiUrl(eSymbol), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getChartCaption(eSymbol),
+                  parse_mode: 'HTML',
+                  reply_markup: {
+                    inline_keyboard: getChunkInputObjs(
+                      CB_ACTION_CHART_SYMBOL,
+                      setting.INPUT_SYMBOLS,
+                      setting.INPUT_SYMBOLS_COLUMN,
+                      eSymbol
+                    ),
+                  },
+                })
+              )
+          } else if (text === '/overview') {
+            return axios
+              .get(getMktScreenerImgApiUrl('overview'), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getMktScreenerCaption('overview'),
+                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text === '/performance') {
+            return axios
+              .get(getMktScreenerImgApiUrl('performance'), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getMktScreenerCaption('performance'),
+                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text === '/oscillators') {
+            return axios
+              .get(getMktScreenerImgApiUrl('oscillators'), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getMktScreenerCaption('oscillators'),
+                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text === '/moving_avgs') {
+            return axios
+              .get(getMktScreenerImgApiUrl('moving_averages'), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getMktScreenerCaption('moving_averages'),
+                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text?.startsWith('/price')) {
+            const [eSymbol, interval] = text.split(' ').slice(1)
+
+            return axios
+              .get(getPriceImgApiUrl(eSymbol, interval), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getPriceCaption(eSymbol, interval),
+                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text?.startsWith('/chart')) {
+            const [eSymbol, interval, studies] = text.split(' ').slice(1)
+            const splitStudies = studies?.split(setting.CHART_INPUT_STUDIES_SPLIT)
+
+            return axios
+              .get(getChartImgApiUrl(eSymbol, interval, splitStudies), {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  caption: getChartCaption(eSymbol, interval, splitStudies),
+                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text?.startsWith('/example')) {
+            return teleBot.sendMessage(chat.id, MESSAGE.TELEGRAM_EXAMPLE, {
+              parse_mode: 'HTML',
+            })
           } else {
-            log.debug(`:: debug :: ${from.first_name} :: ignore message`)
+            log.debug(`:: debug :: ${from.first_name} :: invalid request`)
+            return teleBot.sendMessage(chat.id, MESSAGE.INVALID_REQUEST)
           }
         } else {
-          log.debug(`:: debug :: ${from.first_name} :: ignore non-text message`)
+          log.debug(`:: debug :: ${from.first_name} :: ignore message`)
         }
       })
       .catch((error) => handleError(error, from, text))
