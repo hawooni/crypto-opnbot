@@ -605,12 +605,11 @@ module.exports = (log, argv, version, setting) => {
 
     return Promise.resolve().then(() => {
       if (error.response?.statusCode === 400) {
-        log.debug(`:: debug :: ${logErrMsg}`) // telebot.req bad request by the user
+        log.debug(`:: debug :: ${logErrMsg}`) // telebot.req bad request by the user / query is too old
       } else if (error.response?.status === 422) {
         log.debug(`:: debug :: ${logErrMsg} :: ${error.response?.data?.toString()}`)
         return teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
       } else {
-        log.error(logErrMsg)
         return teleBot.sendMessage(from.id, 'Something Went Wrong. Please try again later.')
       }
     })
