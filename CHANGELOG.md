@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2021-12-16
+
+- Telebot /example with intervals.
+- update handleError().
+- update package dependency `node-telegram-bot-api`.
+
 ## [0.3.2] - 2021-12-06
 
 ### Changed
