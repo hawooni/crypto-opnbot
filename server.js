@@ -25,6 +25,12 @@ const argv = yargs
     type: 'string',
     describe: 'Set log level',
     default: process.env.LOG || 'verbose',
+  })
+  .check((argv) => {
+    if (!argv.telegramToken) {
+      return 'Missing required argument: Telegram Token'
+    }
+    return true
   }).argv
 
 const log = winston.createLogger({ level: argv.log })
@@ -34,6 +40,8 @@ log.info(`CryptOpnBot version ${version} (https://crypto.opnbot.com)`)
 // node-telegram-bot-api suppress warnings
 process.env.NTBA_FIX_319 = 1
 process.env.NTBA_FIX_350 = 1
+
+setting.CHART_IMG_API_KEY = argv.apiKey
 
 if (!Array.isArray(setting.CHART_INPUT_STUDIES?.[0]?.value)) {
   log.warn('\nWarning: config/setting CHART_INPUT_STUDIES String value is deprecated in v0.2.0+')

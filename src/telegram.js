@@ -17,13 +17,8 @@ module.exports = (log, argv, version, setting) => {
   const teleBot = new TelegramBot(argv.telegramToken, { polling: true })
 
   const BOT_NAME = process.env.BOT_NAME || setting.BOT_NAME
-  const CHART_IMG_API_KEY = process.env.CHART_IMG_API_KEY || null
 
   log.verbose('\nRunning Telegram Server ✓')
-
-  if (CHART_IMG_API_KEY) {
-    axios.defaults.headers.common['authorization'] = `Bearer ${CHART_IMG_API_KEY}`
-  }
 
   axios.defaults.headers.common['user-agent'] = `cryptoOpnBot/${version}`
 
@@ -39,22 +34,6 @@ module.exports = (log, argv, version, setting) => {
     {
       command: '/chart',
       description: 'Advanced Chart.',
-    },
-    {
-      command: '/overview',
-      description: 'Market Overview.',
-    },
-    {
-      command: '/performance',
-      description: 'Market Performance.',
-    },
-    {
-      command: '/oscillators',
-      description: 'Market Oscillators.',
-    },
-    {
-      command: '/moving_avgs',
-      description: 'Market Moving Averages.',
     },
     {
       command: '/example',
@@ -118,50 +97,6 @@ module.exports = (log, argv, version, setting) => {
                       eSymbol
                     ),
                   },
-                })
-              )
-          } else if (text === '/overview') {
-            return axios
-              .get(getMktScreenerImgApiUrl('overview'), {
-                responseType: 'arraybuffer',
-              })
-              .then((res) =>
-                teleBot.sendPhoto(chat.id, res.data, {
-                  caption: getMktScreenerCaption('overview'),
-                  parse_mode: 'HTML',
-                })
-              )
-          } else if (text === '/performance') {
-            return axios
-              .get(getMktScreenerImgApiUrl('performance'), {
-                responseType: 'arraybuffer',
-              })
-              .then((res) =>
-                teleBot.sendPhoto(chat.id, res.data, {
-                  caption: getMktScreenerCaption('performance'),
-                  parse_mode: 'HTML',
-                })
-              )
-          } else if (text === '/oscillators') {
-            return axios
-              .get(getMktScreenerImgApiUrl('oscillators'), {
-                responseType: 'arraybuffer',
-              })
-              .then((res) =>
-                teleBot.sendPhoto(chat.id, res.data, {
-                  caption: getMktScreenerCaption('oscillators'),
-                  parse_mode: 'HTML',
-                })
-              )
-          } else if (text === '/moving_avgs') {
-            return axios
-              .get(getMktScreenerImgApiUrl('moving_averages'), {
-                responseType: 'arraybuffer',
-              })
-              .then((res) =>
-                teleBot.sendPhoto(chat.id, res.data, {
-                  caption: getMktScreenerCaption('moving_averages'),
-                  parse_mode: 'HTML',
                 })
               )
           } else if (text?.startsWith('/price')) {
@@ -325,18 +260,16 @@ module.exports = (log, argv, version, setting) => {
    * @param {String} eSymbol eg. 'BINANCE:BTCUSDT'
    * @param {String|null} interval  eg. '4h'
    * @param {String[]|null} studies eg. ['RSI', 'MACD', ...]
-   * @param {Boolean|true} size
    * @returns {String}
    */
-  function getPriceImgApiUrl(eSymbol, interval = null, size = true) {
+  function getPriceImgApiUrl(eSymbol, interval = null) {
     const query = {
       symbol: eSymbol,
       interval: interval || setting.DEFAULT_PRICE_INTERVAL,
       theme: setting.THEME_IMG,
-    }
-    if (size) {
-      query.width = setting.PRICE_IMG_WIDTH
-      query.height = setting.PRICE_IMG_HEIGHT
+      width: setting.PRICE_IMG_WIDTH,
+      height: setting.PRICE_IMG_HEIGHT,
+      key: setting.CHART_IMG_API_KEY,
     }
     return `${setting.API_CHART_IMG_BASE_URL}/tradingview/mini-chart?${qs.stringify(query)}`
   }
@@ -345,35 +278,20 @@ module.exports = (log, argv, version, setting) => {
    * @param {String} eSymbol eg. 'BINANCE:BTCUSDT'
    * @param {String|null} interval  eg. '4h'
    * @param {String[]|null} studies eg. ['RSI', 'MACD', ...]
-   * @param {Boolean|true} size
    * @returns {String}
    */
-  function getChartImgApiUrl(eSymbol, interval = null, studies = null, size = true) {
+  function getChartImgApiUrl(eSymbol, interval = null, studies = null) {
     const query = {
       symbol: eSymbol,
       interval: interval || setting.DEFAULT_CHART_INTERVAL,
       studies: studies || setting.DEFAULT_CHART_STUDIES,
       theme: setting.THEME_IMG,
       timezone: setting.DEFAULT_TIMEZONE,
-    }
-    if (size) {
-      query.width = setting.CHART_IMG_WIDTH
-      query.height = setting.CHART_IMG_HEIGHT
+      width: setting.CHART_IMG_WIDTH,
+      height: setting.CHART_IMG_HEIGHT,
+      key: setting.CHART_IMG_API_KEY,
     }
     return `${setting.API_CHART_IMG_BASE_URL}/tradingview/advanced-chart?${qs.stringify(query)}`
-  }
-
-  /**
-   * @param {String} type
-   * @returns {Object}
-   */
-  function getMktScreenerImgApiUrl(type) {
-    return `${setting.API_CHART_IMG_BASE_URL}/tradingview/mkt-screener?${qs.stringify({
-      type: type,
-      list: setting.MKT_SCREENER_LIST,
-      currency: setting.MKT_SCREENER_CURRENCY,
-      theme: setting.THEME_IMG,
-    })}`
   }
 
   /**
@@ -382,7 +300,7 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} price image caption
    */
   function getPriceCaption(eSymbol, interval = null) {
-    const url = getPriceImgApiUrl(eSymbol, interval, false) // external to use default size
+    const url = getPriceImgApiUrl(eSymbol, interval) // external to use default size
     return `<a href="${url}">${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}</a>` // prettier-ignore
   }
 
@@ -393,24 +311,11 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} chart image caption
    */
   function getChartCaption(eSymbol, interval = null, studies = null) {
-    const url = getChartImgApiUrl(eSymbol, interval, studies, false) // external to use default size
+    const url = getChartImgApiUrl(eSymbol, interval, studies) // external to use default size
     const dInterval = interval || setting.DEFAULT_CHART_INTERVAL
     const dStudies = studies || setting.DEFAULT_CHART_STUDIES
     const studyIds = lodash.uniq(dStudies.map((dStudy) => dStudy.split(':')[0]))
     return `<a href="${url}">${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}</a>`
-  }
-
-  /**
-   * @param {String} type
-   * @returns {String}
-   */
-  function getMktScreenerCaption(type) {
-    const url = getMktScreenerImgApiUrl(type)
-
-    if (type === 'moving_averages') {
-      return `<a href="${url}">Market Moving Averages Top ${setting.MKT_SCREENER_LIST}</a>`
-    }
-    return `<a href="${url}">Market ${ucfirst(type)} Top ${setting.MKT_SCREENER_LIST}</a>`
   }
 
   /**
@@ -583,16 +488,6 @@ module.exports = (log, argv, version, setting) => {
   }
 
   /**
-   * capitalize first letter
-   *
-   * @param {String} string
-   * @returns {String}
-   */
-  function ucfirst(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1)
-  }
-
-  /**
    * @param {Error} error
    * @param {Object} from
    * @param {*|null} data
@@ -609,7 +504,11 @@ module.exports = (log, argv, version, setting) => {
       } else if (error.response?.status === 422) {
         log.debug(`:: debug :: ${logErrMsg} :: ${error.response?.data?.toString()}`)
         return teleBot.sendMessage(from.id, MESSAGE.INVALID_REQUEST) // axios.req invalid request
+      } else if (error.response?.status === 401) {
+        log.error(`:: error :: ${logErrMsg}`)
+        return teleBot.sendMessage(from.id, 'Unauthorized request. Please check your bot settings.')
       } else {
+        log.error(`:: error :: ${logErrMsg}`)
         return teleBot.sendMessage(from.id, 'Something Went Wrong. Please try again later.')
       }
     })
