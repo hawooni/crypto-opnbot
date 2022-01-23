@@ -15,6 +15,12 @@ const argv = yargs
     default: process.env.TELEGRAM_TOKEN || null,
     demandOption: true,
   })
+  .option('apiKey', {
+    type: 'string',
+    describe: 'Set CHART-IMG API Key',
+    default: process.env.CHART_IMG_API_KEY || null,
+    demandOption: true,
+  })
   .option('rateLimit', {
     type: 'number',
     describe: 'Set request rate limit',
@@ -30,6 +36,9 @@ const argv = yargs
     if (!argv.telegramToken) {
       return 'Missing required argument: Telegram Token'
     }
+    if (!argv.apiKey) {
+      return 'Missing required argument: CHART-IMG API key'
+    }
     return true
   }).argv
 
@@ -42,6 +51,7 @@ process.env.NTBA_FIX_319 = 1
 process.env.NTBA_FIX_350 = 1
 
 setting.CHART_IMG_API_KEY = argv.apiKey
+setting.API_CHART_IMG_BASE_URL = process.env.API_CHART_IMG_BASE_URL || setting.API_CHART_IMG_BASE_URL // prettier-ignore
 
 if (!Array.isArray(setting.CHART_INPUT_STUDIES?.[0]?.value)) {
   log.warn('\nWarning: config/setting CHART_INPUT_STUDIES String value is deprecated in v0.2.0+')
