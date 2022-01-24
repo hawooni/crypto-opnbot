@@ -50,8 +50,12 @@ log.info(`CryptOpnBot version ${version} (https://crypto.opnbot.com)`)
 process.env.NTBA_FIX_319 = 1
 process.env.NTBA_FIX_350 = 1
 
-setting.CHART_IMG_API_KEY = argv.apiKey
+setting.BOT_NAME = process.env.BOT_NAME || setting.BOT_NAME
 setting.API_CHART_IMG_BASE_URL = process.env.API_CHART_IMG_BASE_URL || setting.API_CHART_IMG_BASE_URL // prettier-ignore
+setting.CHART_IMG_WIDTH = process.env.CHART_IMG_WIDTH || setting.CHART_IMG_WIDTH
+setting.CHART_IMG_HEIGHT = process.env.CHART_IMG_HEIGHT || setting.CHART_IMG_HEIGHT
+
+setting.CHART_IMG_API_KEY = argv.apiKey
 
 if (!Array.isArray(setting.CHART_INPUT_STUDIES?.[0]?.value)) {
   log.warn('\nWarning: config/setting CHART_INPUT_STUDIES String value is deprecated in v0.2.0+')
@@ -67,14 +71,12 @@ if (!setting.CHART_INPUT_STUDIES_SPLIT) {
   setting.CHART_INPUT_STUDIES_SPLIT = ';'
 }
 
-if (!setting.MKT_SCREENER_LIST) {
-  log.warn('\nWarning: config/setting MKT_SCREENER_LIST is required in v0.3.0+')
-  setting.MKT_SCREENER_LIST = 25
+if (setting.MKT_SCREENER_LIST) {
+  log.warn('\nWarning: config/setting MKT_SCREENER_LIST is deprecated in v0.4.0+')
 }
 
-if (!setting.MKT_SCREENER_CURRENCY) {
-  log.warn('\nWarning: config/setting MKT_SCREENER_CURRENCY is required in v0.3.0+')
-  setting.MKT_SCREENER_CURRENCY = 'USD'
+if (setting.MKT_SCREENER_CURRENCY) {
+  log.warn('\nWarning: config/setting MKT_SCREENER_CURRENCY is deprecated in v0.4.0+')
 }
 
 srvTelegram(log, argv, version, setting)

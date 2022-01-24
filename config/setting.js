@@ -13,17 +13,12 @@ module.exports = {
   THEME_IMG: 'dark', // dark,light
 
   // api key dependent
-  PRICE_IMG_WIDTH: 550,
-  PRICE_IMG_HEIGHT: 300,
+  PRICE_IMG_WIDTH: 800,
+  PRICE_IMG_HEIGHT: 400,
 
   // api key dependent
   CHART_IMG_WIDTH: 800,
   CHART_IMG_HEIGHT: 600,
-
-  // api key dependent
-  MKT_SCREENER_LIST: 25,
-
-  MKT_SCREENER_CURRENCY: 'USD', // USD,BTC
 
   INPUT_CHECK_CHAR: '✓',
   INPUT_SYMBOLS_COLUMN: 4,
@@ -150,6 +145,7 @@ module.exports = {
   ],
 
   API_CHART_IMG_BASE_URL: 'https://api.chart-img.com/v1',
+  CRYPTO_FEAR_GREED_INDEX_URL: 'https://alternative.me/crypto/fear-and-greed-index.png',
 
   TELEGRAM_ALLOW_BOT: false, // talk to another bot or ignore
   TELEGRAM_WHITE_LIST_IDS: [], // only respond to from ids here (empty array to disable)
