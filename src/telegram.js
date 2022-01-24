@@ -9,14 +9,13 @@ const CB_ACTION_PRICE_SYMBOL = 'price-symbol'
 const CB_ACTION_CHART_SYMBOL = 'chart-symbol'
 const CB_ACTION_CHART_INTERVAL = 'chart-interval'
 const CB_ACTION_CHART_STUDIES = 'chart-studies'
+const CB_ACTION_FG_INDEX = 'fear-greed-index'
 
 module.exports = (log, argv, version, setting) => {
   const TelegramBot = require('@lib/telegram')
 
   const chatLimit = new NodeCache({ stdTTL: 60 }) // rate limit ttl per minute
   const teleBot = new TelegramBot(argv.telegramToken, { polling: true })
-
-  const BOT_NAME = process.env.BOT_NAME || setting.BOT_NAME
 
   log.verbose('\nRunning Telegram Server ✓')
 
@@ -34,6 +33,10 @@ module.exports = (log, argv, version, setting) => {
     {
       command: '/chart',
       description: 'Advanced Chart.',
+    },
+    {
+      command: '/fear_greed_index',
+      description: 'Crypto Market Sentiment Index',
     },
     {
       command: '/example',
@@ -56,7 +59,7 @@ module.exports = (log, argv, version, setting) => {
           if (text === '/start') {
             return teleBot.sendMessage(
               chat.id,
-              MESSAGE.TELEGRAM_START.replace('{{botName}}', BOT_NAME),
+              MESSAGE.TELEGRAM_START.replace('{{botName}}', setting.BOT_NAME),
               {
                 parse_mode: 'HTML',
               }
@@ -69,7 +72,6 @@ module.exports = (log, argv, version, setting) => {
               .then((res) =>
                 teleBot.sendPhoto(chat.id, res.data, {
                   caption: getPriceCaption(eSymbol),
-                  parse_mode: 'HTML',
                   reply_markup: {
                     inline_keyboard: getChunkInputObjs(
                       CB_ACTION_PRICE_SYMBOL,
@@ -88,7 +90,6 @@ module.exports = (log, argv, version, setting) => {
               .then((res) =>
                 teleBot.sendPhoto(chat.id, res.data, {
                   caption: getChartCaption(eSymbol),
-                  parse_mode: 'HTML',
                   reply_markup: {
                     inline_keyboard: getChunkInputObjs(
                       CB_ACTION_CHART_SYMBOL,
@@ -109,7 +110,6 @@ module.exports = (log, argv, version, setting) => {
               .then((res) =>
                 teleBot.sendPhoto(chat.id, res.data, {
                   caption: getPriceCaption(eSymbol, interval),
-                  parse_mode: 'HTML',
                 })
               )
           } else if (text?.startsWith('/chart')) {
@@ -123,7 +123,18 @@ module.exports = (log, argv, version, setting) => {
               .then((res) =>
                 teleBot.sendPhoto(chat.id, res.data, {
                   caption: getChartCaption(eSymbol, interval, splitStudies),
-                  parse_mode: 'HTML',
+                })
+              )
+          } else if (text?.startsWith('/fear_greed_index')) {
+            return axios
+              .get(setting.CRYPTO_FEAR_GREED_INDEX_URL, {
+                responseType: 'arraybuffer',
+              })
+              .then((res) =>
+                teleBot.sendPhoto(chat.id, res.data, {
+                  reply_markup: {
+                    inline_keyboard: getInputReload(CB_ACTION_FG_INDEX),
+                  },
                 })
               )
           } else if (text?.startsWith('/example')) {
@@ -202,6 +213,13 @@ module.exports = (log, argv, version, setting) => {
                 )
               )
             }
+          } else if (cbKey === CB_ACTION_FG_INDEX) {
+            return reqReloadEditMsgPhoto(
+              CB_ACTION_FG_INDEX,
+              setting.CRYPTO_FEAR_GREED_INDEX_URL,
+              chat.id,
+              message_id
+            )
           } else {
             throw Error('Unable to get symbol from callback query.')
           }
@@ -300,8 +318,7 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} price image caption
    */
   function getPriceCaption(eSymbol, interval = null) {
-    const url = getPriceImgApiUrl(eSymbol, interval) // external to use default size
-    return `<a href="${url}">${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}</a>` // prettier-ignore
+    return `${eSymbol.toUpperCase()} ${interval || setting.DEFAULT_PRICE_INTERVAL}`
   }
 
   /**
@@ -311,11 +328,11 @@ module.exports = (log, argv, version, setting) => {
    * @returns {String} chart image caption
    */
   function getChartCaption(eSymbol, interval = null, studies = null) {
-    const url = getChartImgApiUrl(eSymbol, interval, studies) // external to use default size
     const dInterval = interval || setting.DEFAULT_CHART_INTERVAL
     const dStudies = studies || setting.DEFAULT_CHART_STUDIES
     const studyIds = lodash.uniq(dStudies.map((dStudy) => dStudy.split(':')[0]))
-    return `<a href="${url}">${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}</a>`
+
+    return `${eSymbol.toUpperCase()} ${dInterval} ${studyIds.toString()}`
   }
 
   /**
@@ -338,12 +355,33 @@ module.exports = (log, argv, version, setting) => {
       .then((res) => {
         const opt = getEditMsgPhotoOpt(chatId, msgId, res.data, {
           caption: getPriceCaption(...inputs),
-          parse_mode: 'HTML',
         })
         if (inputKeys) {
           opt.qs.reply_markup = {
             inline_keyboard: inputKeys,
           }
+        }
+        return teleBot._request('editMessageMedia', opt)
+      })
+  }
+
+  /**
+   * @param {String} cbKey
+   * @param {String} url
+   * @param {Integer} chatId
+   * @param {Integer} msgId
+   * @returns {Promise}
+   */
+  function reqReloadEditMsgPhoto(cbKey, url, chatId, msgId) {
+    return axios
+      .get(url, {
+        responseType: 'arraybuffer',
+      })
+      .then((res) => {
+        const opt = getEditMsgPhotoOpt(chatId, msgId, res.data)
+
+        opt.qs.reply_markup = {
+          inline_keyboard: getInputReload(cbKey),
         }
         return teleBot._request('editMessageMedia', opt)
       })
@@ -366,7 +404,6 @@ module.exports = (log, argv, version, setting) => {
       .then((res) => {
         const opt = getEditMsgPhotoOpt(chatId, msgId, res.data, {
           caption: getChartCaption(...inputs),
-          parse_mode: 'HTML',
         })
         if (inputKeys) {
           opt.qs.reply_markup = {
@@ -421,6 +458,21 @@ module.exports = (log, argv, version, setting) => {
       [
         {
           text: '« BACK',
+          callback_data: cbKey,
+        },
+      ],
+    ]
+  }
+
+  /**
+   * @param {String} cbKey
+   * @returns {Array}
+   */
+  function getInputReload(cbKey) {
+    return [
+      [
+        {
+          text: '↻ ' + new Date().toISOString(), // must be a unique message (400 Bad Request: message is not modified)
           callback_data: cbKey,
         },
       ],
