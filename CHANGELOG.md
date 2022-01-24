@@ -2,7 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2022-01-24
+
+### Changed
+
+- CHART-IMG API key is required.
+
+### Added
+
+- `/fear_greed_index` Fear and greed index support.
+
+### Removed
+
+- `/overview`, `/performance`, `/oscillators`, `/moving_avgs` Market screener no longer supported by CHART-IMG API.
+
 ## [0.3.3] - 2021-12-16
+
+### Changed
 
 - Telebot /example with intervals.
 - update handleError().

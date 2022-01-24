@@ -1,6 +1,6 @@
 {
   "name": "@opnbot/crypto",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "A simple crypto Telegram Bot based on chart-img.com API.",
   "license": "Apache-2.0",
   "author": "hawooni <developer@hawooni.com> (https://hawooni.com)",
@@ -21,15 +21,15 @@
     "@config": "config"
   },
   "dependencies": {
-    "axios": "^0.24.0",
-    "dotenv": "^10.0.0",
+    "axios": "^0.25.0",
+    "dotenv": "^14.2.0",
     "lodash": "^4.17.21",
     "module-alias": "^2.2.2",
     "node-cache": "^5.1.2",
     "node-telegram-bot-api": "^0.56.0",
-    "qs": "^6.10.2",
-    "winston": "^3.3.3",
-    "yargs": "^17.3.0"
+    "qs": "^6.10.3",
+    "winston": "^3.4.0",
+    "yargs": "^17.3.1"
   },
   "devDependencies": {
     "prettier": "^2.5.1"

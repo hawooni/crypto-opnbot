@@ -8,11 +8,13 @@ http://t.me/CryptoOpnBot
 
 You can use this bot if you don't want to customize your own. It will always run with the latest version.
 
-## Limitation
+## Notice
 
-- Currently, [CHART-IMG](https://doc.chart-img.com) only supports screenshot image resolution only up to `800x600` with `15` req/min. It will support a higher resolution and rate limit in the future with API-Key.
+CHART-IMG API key is required.
 
 ## Setup
+
+Get your free personal API key at [https://chart-img.com](https://chart-img.com).
 
 ### Clone the repo
 
@@ -44,13 +46,16 @@ You should create .env file with the following variable(s):
 
 ```
 TELEGRAM_TOKEN=<your_telegram_token>
+CHART_IMG_API_KEY=<your_chart_img_api_key>
 ```
 
 Optional:
 
 ```
 BOT_NAME=@CryptoOpnBot
-CHART_IMG_API_KEY=<your_chart_img_api_key>
+
+CHART_IMG_WIDTH=1024
+CHART_IMG_HEIGHT=768
 ```
 
 ## Quick Run
@@ -58,14 +63,16 @@ CHART_IMG_API_KEY=<your_chart_img_api_key>
 ### NPM
 
 ```
-npm start -- --telegramToken=<your_telegram_token>
+npm install
+npm start -- --telegramToken=<your_telegram_token> --apiKey=<your_chart_img_api_key>
 ```
 
 ### Docker
 
 ```
-docker run -it --name crypto-opnbot \
+docker run -d --restart=always --name crypto-opnbot \
 -e TELEGRAM_TOKEN=<your_telegram_token> \
+-e CHART_IMG_API_KEY=<your_chart_img_api_key> \
 hawooni/crypto-opnbot:latest
 ```
 
@@ -91,18 +98,6 @@ hawooni/crypto-opnbot:latest
 
 ![/chart](doc/image/chart-indicator.png?raw=true)
 
-### /overview
+### /fear_greed_index
 
-![/overview](doc/image/overview.png?raw=true)
-
-### /performance
-
-![/performance](doc/image/performance.png?raw=true)
-
-### /oscillators
-
-![/oscillators](doc/image/oscillators.png?raw=true)
-
-### /moving_avgs
-
-![/moving_avgs](doc/image/moving_avgs.png?raw=true)
+![/fear_greed_index](doc/image/fear_greed_index.png?raw=true)
