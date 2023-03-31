@@ -1,3 +1,5 @@
+# Please refer to the new project [chart-img-telegram-bot](https://github.com/hawooni/chart-img-telegram-bot) that supports API versions 1 and 2 and will be actively maintained.
+
 # CryptoOpnBot
 
 It is a simple crypto Telegram Bot based on [CHART-IMG](https://chart-img.com) API. It supports all TradingView symbols and is not limited to only crypto symbols. However, the focus will be on the crypto market in future updates.
